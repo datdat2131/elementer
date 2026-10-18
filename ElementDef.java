@@ -17,7 +17,10 @@ public record ElementDef(
         double undeadBonus,
         List<AttrDef> attributes,
         Map<DamageCause, Double> damageReduction,
-        ProcDef proc) {
+        ProcDef proc,
+        AuraDef aura,
+        boolean voucherOnly,
+        WingsDef wings) {
 
     /** Tên có màu + biểu tượng, ví dụ "&c🔥 Hỏa". */
     public String colored() {

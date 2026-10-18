@@ -1,6 +1,7 @@
 package com.astrax.elementer;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /** Bản chụp bất biến của dữ liệu người chơi để ghi xuống DB ở thread khác. */
@@ -15,5 +16,8 @@ public record PlayerSnapshot(
         long dailyExp,
         long dailyDay,
         long awakenedAt,
-        Map<String, Integer> skills) {
+        Map<String, Integer> skills,
+        Set<String> unlocked,
+        boolean auraEnabled,
+        boolean wingsEnabled) {
 }

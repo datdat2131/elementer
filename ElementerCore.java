@@ -16,6 +16,8 @@ public final class ElementerCore extends JavaPlugin {
     private SkillService skillService;
     private CombatService combatService;
     private ElementGUI gui;
+    private AuraService auraService;
+    private VoucherService voucherService;
 
     @Override
     public void onEnable() {
@@ -45,26 +47,31 @@ public final class ElementerCore extends JavaPlugin {
         skillService = new SkillService(this, elementConfig, elementService, combatService);
         combatService.bind(elementService);
         elementService.bind(skillService);
-        gui = new ElementGUI(this, elementConfig, elementService, skillService);
+        auraService = new AuraService(this, elementConfig, elementService);
+        OwnershipActions actions = new OwnershipActions(elementConfig, elementService);
+        gui = new ElementGUI(this, elementConfig, elementService, skillService, actions, auraService);
 
         Bukkit.getPluginManager().registerEvents(new PlayerListener(this, elementConfig, elementService, skillService, combatService), this);
         Bukkit.getPluginManager().registerEvents(new DamageListener(elementConfig, elementService, combatService), this);
         Bukkit.getPluginManager().registerEvents(new ProgressListener(this, elementConfig, elementService), this);
         Bukkit.getPluginManager().registerEvents(gui, this);
+        voucherService = new VoucherService(this, elementConfig, elementService, storage);
+        Bukkit.getPluginManager().registerEvents(new VoucherListener(voucherService, elementConfig), this);
 
         PluginCommand main = getCommand("elementer");
         PluginCommand admin = getCommand("elementeradmin");
         if (main != null) {
-            ElementerCommand c = new ElementerCommand(elementConfig, elementService, skillService, gui);
+            ElementerCommand c = new ElementerCommand(elementConfig, elementService, skillService, gui, actions, auraService);
             main.setExecutor(c);
             main.setTabCompleter(c);
         }
         if (admin != null) {
-            ElementerAdminCommand c = new ElementerAdminCommand(this, elementConfig, elementService);
+            ElementerAdminCommand c = new ElementerAdminCommand(this, elementConfig, elementService, voucherService);
             admin.setExecutor(c);
             admin.setTabCompleter(c);
         }
 
+        auraService.start();
         elementService.start();
         // Hỗ trợ /reload hoặc plugin được bật khi đã có người chơi online
         for (Player p : Bukkit.getOnlinePlayers()) elementService.load(p);
@@ -73,6 +80,7 @@ public final class ElementerCore extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (auraService != null) auraService.stop();
         if (elementService != null) elementService.shutdown();
         if (storage != null) storage.close();
     }
@@ -81,5 +89,6 @@ public final class ElementerCore extends JavaPlugin {
     public void reloadAll() {
         elementConfig.load();
         elementService.reapplyAll();
+        auraService.start(); // áp dụng lại aura.interval-ticks
     }
 }

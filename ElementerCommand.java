@@ -13,18 +13,23 @@ import java.util.List;
 import java.util.Locale;
 
 public final class ElementerCommand implements CommandExecutor, TabCompleter {
-    private static final List<String> SUBS = List.of("help", "info", "skills", "stats", "top", "cast", "select", "awaken");
+    private static final List<String> SUBS = List.of("help", "info", "skills", "stats", "top", "cast", "select", "awaken", "unlock", "switch", "aura", "wings");
 
     private final ElementConfig cfg;
     private final ElementService elements;
     private final SkillService skills;
     private final ElementGUI gui;
+    private final OwnershipActions actions;
+    private final AuraService aura;
 
-    public ElementerCommand(ElementConfig cfg, ElementService elements, SkillService skills, ElementGUI gui) {
+    public ElementerCommand(ElementConfig cfg, ElementService elements, SkillService skills, ElementGUI gui,
+                            OwnershipActions actions, AuraService aura) {
         this.cfg = cfg;
         this.elements = elements;
         this.skills = skills;
         this.gui = gui;
+        this.actions = actions;
+        this.aura = aura;
     }
 
     private boolean allowed(CommandSender s, String perm) {
@@ -91,24 +96,38 @@ public final class ElementerCommand implements CommandExecutor, TabCompleter {
                     m.send(p, "cast.selected", "slot", slot, "name", s.name());
                 }
             }
-            case "awaken" -> {
-                if (!allowed(p, "elementer.command.awaken")) return true;
+            case "awaken", "unlock" -> {
+                if (!allowed(p, "elementer.command." + sub)) return true;
                 Element e = args.length < 2 ? null : Element.parse(args[1]);
-                if (e == null) {
-                    m.send(p, "awaken.invalid");
-                    return true;
-                }
-                ElementDef def = cfg.element(e);
-                switch (elements.awaken(p, e)) {
-                    case OK -> m.send(p, "awaken.success", "element", def == null ? e.name() : def.colored());
-                    case ALREADY -> m.send(p, "awaken.already");
-                    case DISABLED -> m.send(p, "awaken.disabled");
-                    case NO_DATA -> m.send(p, "data-loading");
-                }
+                if (e == null) m.send(p, "awaken.invalid");
+                else actions.unlock(p, e);
+            }
+            case "switch" -> {
+                if (!allowed(p, "elementer.command.switch")) return true;
+                Element e = args.length < 2 ? null : Element.parse(args[1]);
+                if (e == null) m.send(p, "awaken.invalid");
+                else actions.switchTo(p, e);
+            }
+            case "wings" -> {
+                if (!allowed(p, "elementer.command.wings")) return true;
+                aura.setWings(p, onOff(args));
+            }
+            case "aura" -> {
+                if (!allowed(p, "elementer.command.aura")) return true;
+                aura.setEnabled(p, onOff(args));
             }
             default -> m.send(p, "unknown-command");
         }
         return true;
+    }
+
+    /** "on/bat" -> true, "off/tat" -> false, còn lại null (đảo trạng thái). */
+    private static Boolean onOff(String[] args) {
+        if (args.length < 2) return null;
+        String a = args[1].toLowerCase(Locale.ROOT);
+        if (a.equals("on") || a.equals("bat")) return true;
+        if (a.equals("off") || a.equals("tat")) return false;
+        return null;
     }
 
     /** Dữ liệu người chơi đã thức tỉnh, hoặc null (đã báo lỗi cho người chơi). */
@@ -129,7 +148,7 @@ public final class ElementerCommand implements CommandExecutor, TabCompleter {
         if (args.length >= 2) {
             try {
                 int v = Integer.parseInt(args[1]);
-                if (v >= 1 && v <= 3) return v;
+                if (v >= 1 && v <= PlayerData.MAX_SKILL_SLOTS) return v;
             } catch (NumberFormatException ignored) {
                 // rơi xuống dùng kỹ năng đang chọn / báo lỗi
             }
@@ -181,8 +200,11 @@ public final class ElementerCommand implements CommandExecutor, TabCompleter {
             for (String s : SUBS) if (s.startsWith(args[0].toLowerCase(Locale.ROOT))) out.add(s);
         } else if (args.length == 2) {
             String sub = args[0].toLowerCase(Locale.ROOT);
-            if (sub.equals("cast") || sub.equals("select")) out.addAll(List.of("1", "2", "3"));
-            if (sub.equals("awaken")) out.addAll(List.of("hoa", "bang", "loi", "tho", "phong", "quang"));
+            if (sub.equals("cast") || sub.equals("select")) out.addAll(List.of("1", "2", "3", "4"));
+            if (sub.equals("awaken") || sub.equals("unlock") || sub.equals("switch")) {
+                for (Element e : Element.values()) out.add(e.alias());
+            }
+            if (sub.equals("aura") || sub.equals("wings")) out.addAll(List.of("on", "off"));
         }
         return out;
     }

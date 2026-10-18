@@ -1,11 +1,17 @@
 package com.astrax.elementer;
 
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.UUID;
 
 /** Dữ liệu nguyên tố của một người chơi. Chỉ truy cập từ main thread. */
 public final class PlayerData {
+    /** Số ô kỹ năng tối đa của một nguyên tố. */
+    public static final int MAX_SKILL_SLOTS = 4;
+
     private final UUID uuid;
     private String name;
     private Element element;
@@ -17,6 +23,9 @@ public final class PlayerData {
     private long dailyDay;
     private long awakenedAt;
     private final Map<String, Integer> skillLevels = new HashMap<>();
+    private final Set<Element> unlocked = EnumSet.noneOf(Element.class);
+    private boolean auraEnabled = true;
+    private boolean wingsEnabled = true;
     private boolean dirty;
 
     public PlayerData(UUID uuid, String name) {
@@ -47,7 +56,7 @@ public final class PlayerData {
     public void addSkillPoints(int p) { setSkillPoints(this.skillPoints + p); }
 
     public int getSelectedSlot() { return selectedSlot; }
-    public void setSelectedSlot(int slot) { this.selectedSlot = Math.min(3, Math.max(1, slot)); dirty = true; }
+    public void setSelectedSlot(int slot) { this.selectedSlot = Math.min(MAX_SKILL_SLOTS, Math.max(1, slot)); dirty = true; }
 
     public long getDailyExp() { return dailyExp; }
     public void setDailyExp(long v) { this.dailyExp = Math.max(0, v); dirty = true; }
@@ -62,6 +71,17 @@ public final class PlayerData {
     public void setSkillLevel(String skillId, int lvl) { skillLevels.put(skillId, Math.max(1, lvl)); dirty = true; }
     public Map<String, Integer> skillLevelsView() { return Map.copyOf(skillLevels); }
     public void clearSkillLevels() { skillLevels.clear(); dirty = true; }
+
+    // ---- nhiều nguyên tố: element = nguyên tố đang dùng, unlocked = các nguyên tố đã sở hữu
+    public boolean hasUnlocked(Element e) { return unlocked.contains(e); }
+    public int unlockedCount() { return unlocked.size(); }
+    public Set<Element> unlockedView() { return EnumSet.copyOf(unlocked.isEmpty() ? EnumSet.noneOf(Element.class) : unlocked); }
+    public void unlock(Element e) { if (e != null && unlocked.add(e)) dirty = true; }
+
+    public boolean isAuraEnabled() { return auraEnabled; }
+    public void setAuraEnabled(boolean v) { this.auraEnabled = v; dirty = true; }
+    public boolean isWingsEnabled() { return wingsEnabled; }
+    public void setWingsEnabled(boolean v) { this.wingsEnabled = v; dirty = true; }
 
     public boolean isDirty() { return dirty; }
     public void markDirty() { dirty = true; }
@@ -78,11 +98,17 @@ public final class PlayerData {
         dailyDay = 0;
         awakenedAt = 0;
         skillLevels.clear();
+        unlocked.clear();
+        auraEnabled = true;
+        wingsEnabled = true;
         dirty = true;
     }
 
     public PlayerSnapshot snapshot() {
+        Set<String> names = new TreeSet<>();
+        for (Element e : unlocked) names.add(e.name());
         return new PlayerSnapshot(uuid, name, element == null ? null : element.name(), level, exp,
-                skillPoints, selectedSlot, dailyExp, dailyDay, awakenedAt, Map.copyOf(skillLevels));
+                skillPoints, selectedSlot, dailyExp, dailyDay, awakenedAt, Map.copyOf(skillLevels),
+                names, auraEnabled, wingsEnabled);
     }
 }

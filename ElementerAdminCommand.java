@@ -19,11 +19,13 @@ public final class ElementerAdminCommand implements CommandExecutor, TabComplete
     private final ElementerCore plugin;
     private final ElementConfig cfg;
     private final ElementService elements;
+    private final VoucherService vouchers;
 
-    public ElementerAdminCommand(ElementerCore plugin, ElementConfig cfg, ElementService elements) {
+    public ElementerAdminCommand(ElementerCore plugin, ElementConfig cfg, ElementService elements, VoucherService vouchers) {
         this.plugin = plugin;
         this.cfg = cfg;
         this.elements = elements;
+        this.vouchers = vouchers;
     }
 
     @Override
@@ -43,10 +45,14 @@ public final class ElementerAdminCommand implements CommandExecutor, TabComplete
             case "give" -> {
                 if (!perm(sender, "elementer.admin.give")) return true;
                 if (args.length < 4) {
-                    m.send(sender, "admin.usage", "usage", "/" + label + " give <người chơi> <exp|points> <số>");
+                    m.send(sender, "admin.usage", "usage", "/" + label + " give <người chơi> <exp|points|voucher> <số|nguyên tố> [số lượng]");
                     return true;
                 }
                 Player t = target(sender, args[1]);
+                if (t != null && args[2].equalsIgnoreCase("voucher")) {
+                    giveVoucher(sender, t, args, label);
+                    return true;
+                }
                 Long n = number(sender, args[3]);
                 if (t == null || n == null) return true;
                 if (n <= 0 || n > MAX_AMOUNT) {
@@ -131,6 +137,33 @@ public final class ElementerAdminCommand implements CommandExecutor, TabComplete
         return true;
     }
 
+    /** /elementeradmin give <người chơi> voucher <nguyên tố> [số lượng] - dùng được từ console (plugin nạp thẻ). */
+    private void giveVoucher(CommandSender sender, Player t, String[] args, String label) {
+        Messages m = cfg.messages();
+        Element e = Element.parse(args[3]);
+        if (e == null || cfg.element(e) == null) {
+            m.send(sender, "awaken.invalid");
+            return;
+        }
+        int amount = 1;
+        if (args.length >= 5) {
+            try {
+                amount = Integer.parseInt(args[4]);
+            } catch (NumberFormatException ex) {
+                m.send(sender, "admin.invalid-number");
+                return;
+            }
+        }
+        if (amount < 1 || amount > 10) {
+            m.send(sender, "admin.invalid-number");
+            return;
+        }
+        int given = vouchers.give(t, e, amount);
+        ElementDef def = cfg.element(e);
+        m.send(sender, "admin.given-voucher", "amount", given, "element", def == null ? e.name() : def.colored(),
+                "player", t.getName());
+    }
+
     private boolean perm(CommandSender s, String node) {
         if (s.hasPermission(node)) return true;
         cfg.messages().send(s, "no-permission");
@@ -161,11 +194,13 @@ public final class ElementerAdminCommand implements CommandExecutor, TabComplete
         } else if (args.length == 2 && !args[0].equalsIgnoreCase("reload")) {
             for (Player p : Bukkit.getOnlinePlayers()) if (p.getName().toLowerCase(Locale.ROOT).startsWith(last)) out.add(p.getName());
         } else if (args.length == 3 && args[0].equalsIgnoreCase("give")) {
-            out.addAll(List.of("exp", "points"));
+            out.addAll(List.of("exp", "points", "voucher"));
         } else if (args.length == 3 && args[0].equalsIgnoreCase("set")) {
             out.addAll(List.of("element", "level", "exp", "points"));
+        } else if (args.length == 4 && args[0].equalsIgnoreCase("give") && args[2].equalsIgnoreCase("voucher")) {
+            for (Element e : Element.values()) out.add(e.alias());
         } else if (args.length == 4 && args[0].equalsIgnoreCase("set") && args[2].equalsIgnoreCase("element")) {
-            out.addAll(List.of("hoa", "bang", "loi", "tho", "phong", "quang"));
+            for (Element e : Element.values()) out.add(e.alias());
         }
         return out;
     }

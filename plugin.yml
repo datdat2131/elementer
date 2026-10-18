@@ -7,7 +7,7 @@ description: Elemental RPG System cho server BoxMine RPG
 commands:
   elementer:
     description: Menu và thông tin nguyên tố
-    usage: /<command> [info|skills|stats|top|cast|select|awaken]
+    usage: /<command> [info|skills|stats|top|cast|select|awaken|unlock|switch|aura|wings]
     aliases: [nguyento]
   elementeradmin:
     description: Quản trị AstraxElementer
@@ -37,6 +37,21 @@ permissions:
     default: true
   elementer.command.awaken:
     description: Thức tỉnh nguyên tố
+    default: true
+  elementer.command.unlock:
+    description: Mở khóa nguyên tố
+    default: true
+  elementer.command.switch:
+    description: Chuyển nguyên tố
+    default: true
+  elementer.command.aura:
+    description: Bật/tắt hào quang
+    default: true
+  elementer.command.wings:
+    description: Bật/tắt cánh
+    default: true
+  elementer.voucher.use:
+    description: Dùng Vé Nguyên Tố
     default: true
   elementer.admin.reload:
     description: /elementeradmin reload

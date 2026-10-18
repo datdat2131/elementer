@@ -33,22 +33,60 @@ final class InfoPages {
                 List.of(Messages.format(ui.raw("gui.points-button"), "points", d.getSkillPoints())), false));
         inv.setItem(14, ui.item(Material.COMPASS, ui.raw("gui.affinity-button"), null, false));
         inv.setItem(16, ui.item(Material.GOLD_INGOT, ui.raw("gui.top-button"), null, false));
+        inv.setItem(20, ui.item(Material.ENDER_EYE, ui.raw("gui.elements-button"), null, false));
+        String state = ui.raw(d.isAuraEnabled() ? "gui.aura-on" : "gui.aura-off");
+        List<String> auraLore = new ArrayList<>();
+        if (def.aura() != null) auraLore.add(Messages.format(ui.raw("gui.lore.aura-info"), "level", def.aura().unlockLevel()));
+        auraLore.add(ui.raw("gui.lore.hint-aura"));
+        inv.setItem(24, ui.item(Material.FIREWORK_STAR, Messages.format(ui.raw("gui.aura-button"), "state", state), auraLore, d.isAuraEnabled()));
+        if (def.wings() != null) {
+            String ws = ui.raw(d.isWingsEnabled() ? "gui.aura-on" : "gui.aura-off");
+            inv.setItem(26, ui.item(Material.ELYTRA, Messages.format(ui.raw("gui.wings-button"), "state", ws),
+                    List.of(ui.raw("gui.lore.hint-aura")), d.isWingsEnabled()));
+        }
         inv.setItem(22, ui.item(Material.BARRIER, ui.raw("gui.close"), null, false));
         p.openInventory(inv);
     }
 
+    /** Trang nguyên tố: xem trạng thái, chuyển nguyên tố đã sở hữu, mở khóa nguyên tố mới. */
     void awaken(Player p, PlayerData d) {
-        Inventory inv = ui.create(GuiHolder.Page.AWAKEN, 27, "gui.title-awaken");
+        Inventory inv = ui.create(GuiHolder.Page.AWAKEN, 36, "gui.title-awaken");
         Element[] all = Element.values();
         for (int i = 0; i < all.length; i++) {
             ElementDef def = cfg.element(all[i]);
             if (def == null) continue;
+            boolean active = d.getElement() == all[i];
+            boolean owned = d.hasUnlocked(all[i]);
             List<String> lore = new ArrayList<>(def.description());
             lore.add(" ");
-            lore.add(ui.raw("gui.lore.hint-awaken"));
-            inv.setItem(GuiHolder.ELEMENT_SLOTS[i], ui.item(def.icon(), def.colored(), lore, d.getElement() == all[i]));
+            if (active) {
+                lore.add(ui.raw("gui.lore.element-active"));
+            } else if (owned) {
+                lore.add(ui.raw("gui.lore.element-owned"));
+                lore.add(ui.raw("gui.lore.hint-switch"));
+            } else {
+                lore.add(ui.raw("gui.lore.element-locked"));
+                if (def.voucherOnly()) {
+                    lore.add(ui.raw("gui.lore.element-voucher"));
+                } else {
+                    if (d.unlockedCount() > 0) {
+                        UnlockReq r = cfg.unlockReq(d.unlockedCount());
+                        lore.add(Messages.format(ui.raw("gui.lore.element-requirement"), "level", r.level(), "points", r.points()));
+                    }
+                    lore.add(ui.raw("gui.lore.hint-unlock"));
+                }
+                int max = elements.ownership().maxOwned();
+                if (d.unlockedCount() >= max) lore.add(Messages.format(ui.raw("gui.lore.element-max"), "max", max));
+            }
+            if (def.voucherOnly() && (active || owned)) lore.add(ui.raw("gui.lore.element-limited"));
+            if (def.aura() != null) {
+                lore.add(Messages.format(ui.raw("gui.lore.aura-info"), "level", def.aura().unlockLevel()));
+            }
+            inv.setItem(GuiHolder.ELEMENT_SLOTS[i], ui.item(def.icon(), def.colored(), lore, active));
         }
-        inv.setItem(22, ui.item(Material.BARRIER, ui.raw("gui.close"), null, false));
+        boolean hasElement = d.getElement() != null;
+        inv.setItem(GuiHolder.ELEMENT_BACK_SLOT, ui.item(hasElement ? Material.ARROW : Material.BARRIER,
+                ui.raw(hasElement ? "gui.back" : "gui.close"), null, false));
         p.openInventory(inv);
     }
 
@@ -64,7 +102,7 @@ final class InfoPages {
     }
 
     void affinity(Player p) {
-        Inventory inv = ui.create(GuiHolder.Page.AFFINITY, 27, "gui.title-affinity");
+        Inventory inv = ui.create(GuiHolder.Page.AFFINITY, 36, "gui.title-affinity");
         Element[] all = Element.values();
         for (int i = 0; i < all.length; i++) {
             ElementDef def = cfg.element(all[i]);
@@ -86,7 +124,7 @@ final class InfoPages {
                     "list", String.join("&7, ", weak), "mult", cfg.affinity().weak()));
             inv.setItem(GuiHolder.ELEMENT_SLOTS[i], ui.item(def.icon(), def.colored(), lore, false));
         }
-        inv.setItem(22, ui.item(Material.ARROW, ui.raw("gui.back"), null, false));
+        inv.setItem(GuiHolder.ELEMENT_BACK_SLOT, ui.item(Material.ARROW, ui.raw("gui.back"), null, false));
         p.openInventory(inv);
     }
 

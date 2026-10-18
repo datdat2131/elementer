@@ -7,6 +7,13 @@ elements:
     symbol: "🔥"
     color: "&c"
     icon: BLAZE_POWDER
+    aura:        # hào quang dưới chân (particle không cần dữ liệu thêm)
+      unlock-level: 5
+      particle: FLAME
+      accent-particle: SMALL_FLAME
+      radius: 0.9
+      points: 12
+      pattern: SPIRAL   # RING | DOUBLE_RING | SPIRAL
     description:
       - "&7Sức mạnh thiêu đốt, sát thương cao."
       - "&7Khắc &bBăng&7, bị &bLôi&7 khắc."
@@ -20,6 +27,13 @@ elements:
     symbol: "❄"
     color: "&b"
     icon: BLUE_ICE
+    aura:        # hào quang dưới chân (particle không cần dữ liệu thêm)
+      unlock-level: 5
+      particle: SNOWFLAKE
+      accent-particle: CLOUD
+      radius: 0.9
+      points: 12
+      pattern: DOUBLE_RING   # RING | DOUBLE_RING | SPIRAL
     description:
       - "&7Làm chậm và khống chế kẻ địch."
       - "&7Khắc &fPhong&7, bị &cHỏa&7 khắc."
@@ -33,6 +47,13 @@ elements:
     symbol: "⚡"
     color: "&e"
     icon: LIGHTNING_ROD
+    aura:        # hào quang dưới chân (particle không cần dữ liệu thêm)
+      unlock-level: 5
+      particle: ELECTRIC_SPARK
+      accent-particle: CRIT
+      radius: 0.85
+      points: 10
+      pattern: SPIRAL   # RING | DOUBLE_RING | SPIRAL
     description:
       - "&7Tốc độ và xung điện bùng nổ."
       - "&7Khắc &cHỏa&7, bị &6Thổ&7 khắc."
@@ -46,6 +67,13 @@ elements:
     symbol: "⛰"
     color: "&6"
     icon: DEEPSLATE
+    aura:        # hào quang dưới chân (particle không cần dữ liệu thêm)
+      unlock-level: 5
+      particle: COMPOSTER
+      accent-particle: CRIT
+      radius: 1.0
+      points: 12
+      pattern: RING   # RING | DOUBLE_RING | SPIRAL
     description:
       - "&7Phòng thủ vững chắc, khó bị đẩy lùi."
       - "&7Khắc &eLôi&7, bị &fPhong&7 khắc."
@@ -59,6 +87,13 @@ elements:
     symbol: "🌪"
     color: "&f"
     icon: FEATHER
+    aura:        # hào quang dưới chân (particle không cần dữ liệu thêm)
+      unlock-level: 5
+      particle: CLOUD
+      accent-particle: WHITE_SMOKE
+      radius: 0.9
+      points: 10
+      pattern: DOUBLE_RING   # RING | DOUBLE_RING | SPIRAL
     description:
       - "&7Cơ động, xuyên thấu và kiểm soát vị trí."
       - "&7Khắc &6Thổ&7, bị &bBăng&7 khắc."
@@ -71,16 +106,82 @@ elements:
     symbol: "✦"
     color: "&e"
     icon: GLOWSTONE_DUST
+    aura:        # hào quang dưới chân (particle không cần dữ liệu thêm)
+      unlock-level: 5
+      particle: END_ROD
+      accent-particle: GLOW
+      radius: 0.9
+      points: 12
+      pattern: SPIRAL   # RING | DOUBLE_RING | SPIRAL
     description:
       - "&7Hồi phục, bảo hộ và thanh tẩy bóng tối."
-      - "&7Trung lập tương khắc, mạnh hơn trước xác sống."
+      - "&7Khắc &5Bóng Tối&7, mạnh hơn trước xác sống."
     damage-per-level: 0.015
     undead-bonus: 0.25           # +25% sát thương lên xác sống
     attributes:
       - { attribute: max_health, operation: ADD_NUMBER, base: 0.0, per-level: 0.08 }
     damage-reduction: { WITHER: 0.4, MAGIC: 0.2, POISON: 0.4 }
 
-# Tương khắc vòng tròn: A khắc B => A đánh B nhận strong, B đánh A nhận weak. Quang trung lập.
+  DARK:
+    name: "Bóng Tối"
+    symbol: "☽"
+    color: "&5"
+    icon: ECHO_SHARD
+    obtain: VOUCHER            # nguyên tố GIỚI HẠN: chỉ có bằng Vé Nguyên Tố (nạp), không mở khóa bằng cấp/điểm
+    description:
+      - "&7Nguyên tố giới hạn: sức mạnh áp đảo, hút máu"
+      - "&7và kéo kẻ địch về phía mình."
+      - "&7Khắc &cHỏa&7, &bBăng&7, &eLôi&7, &6Thổ&7, &fPhong&7; bị &eQuang&7 và &6Rồng&7 khắc."
+    aura:
+      unlock-level: 1
+      particle: SQUID_INK
+      accent-particle: SOUL
+      spark-particle: SMOKE
+      radius: 1.0
+      points: 14
+      pattern: HELIX
+    damage-per-level: 0.03
+    attributes:
+      - { attribute: attack_damage, operation: ADD_NUMBER, base: 0.0, per-level: 0.06 }
+      - { attribute: max_health, operation: ADD_NUMBER, base: 0.0, per-level: 0.12 }
+      - { attribute: movement_speed, operation: ADD_SCALAR, base: 0.0, per-level: 0.001 }
+    damage-reduction: { WITHER: 1.0, MAGIC: 0.3 }
+  DRAGON:
+    name: "Rồng"
+    symbol: "♛"
+    color: "&#ff5500"
+    icon: DRAGON_HEAD
+    obtain: VOUCHER            # nguyên tố GIỚI HẠN: chỉ có bằng Vé Nguyên Tố
+    description:
+      - "&7Nguyên tố giới hạn tối thượng: hào quang rực rỡ,"
+      - "&7đôi cánh rồng và sức mạnh hủy diệt."
+      - "&7Khắc mọi nguyên tố khác."
+    aura:
+      unlock-level: 1
+      particle: FLAME
+      accent-particle: PORTAL
+      spark-particle: END_ROD
+      radius: 1.2
+      points: 16
+      pattern: DRAGON
+    wings:                     # cánh rồng bằng hạt sau lưng (chỉ trang trí)
+      unlock-level: 1
+      bone-particle: FLAME
+      membrane-particle: PORTAL
+      scale: 1.0
+      flap-degrees: 25
+    damage-per-level: 0.03
+    undead-bonus: 0.15
+    attributes:
+      - { attribute: max_health, operation: ADD_NUMBER, base: 0.0, per-level: 0.15 }
+      - { attribute: attack_damage, operation: ADD_NUMBER, base: 0.0, per-level: 0.05 }
+      - { attribute: armor, operation: ADD_NUMBER, base: 0.0, per-level: 0.05 }
+      - { attribute: knockback_resistance, operation: ADD_NUMBER, base: 0.0, per-level: 0.003 }
+    damage-reduction: { FIRE: 0.8, FIRE_TICK: 0.8, LAVA: 0.6, HOT_FLOOR: 0.8, FALL: 0.8, FLY_INTO_WALL: 0.8, DRAGON_BREATH: 1.0 }
+    proc: { type: IGNITE, chance: 0.12, chance-per-level: 0.002, seconds: 4 }
+
+# Tương khắc: A khắc B => A đánh B nhận strong, B đánh A nhận weak. Vòng Hỏa>Băng>Phong>Thổ>Lôi>Hỏa; Quang khắc Bóng Tối;
+# Bóng Tối khắc 5 nguyên tố cơ bản (trừ Quang); Rồng khắc tất cả (không nguyên tố nào khắc Rồng).
 affinity:
   strong-multiplier: 1.25
   weak-multiplier: 0.85
@@ -90,6 +191,9 @@ affinity:
     WIND: [EARTH]
     EARTH: [LIGHTNING]
     LIGHTNING: [FIRE]
+    LIGHT: [DARK]
+    DARK: [FIRE, ICE, LIGHTNING, EARTH, WIND]
+    DRAGON: [DARK, FIRE, ICE, LIGHTNING, EARTH, WIND, LIGHT]
 
 # Nguyên tố của quái (để áp dụng tương khắc khi đánh quái)
 mob-elements:

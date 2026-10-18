@@ -20,12 +20,17 @@ public final class ElementGUI implements Listener {
     private final SkillService skills;
     private final InfoPages info;
     private final SkillPage skillPage;
+    private final OwnershipActions actions;
+    private final AuraService aura;
     private final Map<UUID, Pending> pending = new HashMap<>();
 
-    public ElementGUI(ElementerCore plugin, ElementConfig cfg, ElementService elements, SkillService skills) {
+    public ElementGUI(ElementerCore plugin, ElementConfig cfg, ElementService elements, SkillService skills,
+                      OwnershipActions actions, AuraService aura) {
         this.cfg = cfg;
         this.elements = elements;
         this.skills = skills;
+        this.actions = actions;
+        this.aura = aura;
         GuiItems ui = new GuiItems(cfg);
         this.info = new InfoPages(plugin, cfg, elements, ui);
         this.skillPage = new SkillPage(cfg, skills, ui);
@@ -68,8 +73,11 @@ public final class ElementGUI implements Listener {
             case MAIN -> clickMain(p, slot);
             case AWAKEN -> clickAwaken(p, slot);
             case SKILLS -> clickSkills(p, slot, e.isRightClick());
-            case STATS, AFFINITY -> {
+            case STATS -> {
                 if (slot == 22) openMain(p);
+            }
+            case AFFINITY -> {
+                if (slot == GuiHolder.ELEMENT_BACK_SLOT) openMain(p);
             }
             case TOP -> {
                 if (slot == 31) openMain(p);
@@ -88,14 +96,32 @@ public final class ElementGUI implements Listener {
             case 12 -> openSkills(p);
             case 14 -> info.affinity(p);
             case 16 -> info.top(p);
+            case 20 -> openElements(p);
+            case 26 -> {
+                aura.setWings(p, null);
+                openMain(p);
+            }
+            case 24 -> {
+                aura.setEnabled(p, null);
+                openMain(p);
+            }
             case 22 -> p.closeInventory();
             default -> { }
         }
     }
 
+    private void openElements(Player p) {
+        PlayerData d = elements.get(p);
+        if (d == null) cfg.messages().send(p, "data-loading");
+        else info.awaken(p, d);
+    }
+
     private void clickAwaken(Player p, int slot) {
-        if (slot == 22) {
-            p.closeInventory();
+        PlayerData d = elements.get(p);
+        if (d == null) return;
+        if (slot == GuiHolder.ELEMENT_BACK_SLOT) {
+            if (d.getElement() == null) p.closeInventory();
+            else openMain(p);
             return;
         }
         Element chosen = null;
@@ -103,27 +129,28 @@ public final class ElementGUI implements Listener {
         for (int i = 0; i < GuiHolder.ELEMENT_SLOTS.length; i++) if (GuiHolder.ELEMENT_SLOTS[i] == slot) chosen = all[i];
         ElementDef def = chosen == null ? null : cfg.element(chosen);
         if (def == null) return;
+
+        if (d.hasUnlocked(chosen)) { // đã sở hữu: chuyển sang dùng
+            if (actions.switchTo(p, chosen)) openElements(p);
+            return;
+        }
+        // chưa sở hữu: bấm lần đầu để xem điều kiện/xác nhận, lần hai để mở khóa
         long now = System.currentTimeMillis();
         pending.values().removeIf(x -> x.expiresAt() < now);
         Pending pd = pending.get(p.getUniqueId());
-        if (pd == null || pd.element() != chosen) { // lần bấm đầu: yêu cầu xác nhận
+        if (pd == null || pd.element() != chosen) {
             long ms = cfg.main().getLong("awaken.confirm-seconds", 8) * 1000L;
             pending.put(p.getUniqueId(), new Pending(chosen, now + ms));
-            cfg.messages().send(p, "awaken.confirm", "element", def.colored());
+            if (d.unlockedCount() == 0) {
+                cfg.messages().send(p, "awaken.confirm", "element", def.colored());
+            } else {
+                UnlockReq r = cfg.unlockReq(d.unlockedCount());
+                cfg.messages().send(p, "unlock.confirm", "element", def.colored(), "level", r.level(), "points", r.points());
+            }
             return;
         }
         pending.remove(p.getUniqueId());
-        switch (elements.awaken(p, chosen)) {
-            case OK -> {
-                cfg.messages().send(p, "awaken.success", "element", def.colored());
-                Fx.sound(p.getLocation(), "entity.player.levelup", 1f, 0.8f);
-                Fx.ring(p.getLocation(), 1.5, "END_ROD", 24);
-                openMain(p);
-            }
-            case ALREADY -> cfg.messages().send(p, "awaken.already");
-            case DISABLED -> cfg.messages().send(p, "awaken.disabled");
-            case NO_DATA -> cfg.messages().send(p, "data-loading");
-        }
+        if (actions.unlock(p, chosen)) openElements(p);
     }
 
     private void clickSkills(Player p, int slot, boolean right) {
@@ -131,10 +158,12 @@ public final class ElementGUI implements Listener {
             openMain(p);
             return;
         }
-        int idx = -1;
-        for (int i = 0; i < GuiHolder.SKILL_SLOTS.length; i++) if (GuiHolder.SKILL_SLOTS[i] == slot) idx = i + 1;
         PlayerData d = elements.get(p);
-        if (idx < 0 || d == null || d.getElement() == null) return;
+        if (d == null || d.getElement() == null) return;
+        int[] slots = GuiHolder.skillSlots(cfg.skillsOf(d.getElement()).size());
+        int idx = -1;
+        for (int i = 0; i < slots.length; i++) if (slots[i] == slot) idx = i + 1;
+        if (idx < 0) return;
         SkillDef s = cfg.skill(d.getElement(), idx);
         if (s == null) return;
         if (right) {

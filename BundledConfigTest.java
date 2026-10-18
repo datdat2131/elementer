@@ -36,6 +36,54 @@ class BundledConfigTest {
     }
 
     @Test
+    void everyElementHasValidAura() throws Exception {
+        ConfigurationSection root = yaml("elements.yml").getConfigurationSection("elements");
+        for (Element e : Element.values()) {
+            ConfigurationSection a = root.getConfigurationSection(e.name() + ".aura");
+            assertNotNull(a, "thiếu aura " + e);
+            assertFalse(a.getString("particle", "").isBlank(), e.name());
+            assertTrue(java.util.Set.of("RING", "DOUBLE_RING", "SPIRAL", "HELIX", "DRAGON").contains(a.getString("pattern")), e.name());
+            assertTrue(a.getDouble("radius") > 0 && a.getInt("points") >= 4, e.name());
+        }
+    }
+
+    @Test
+    void unlockRulesAreSane() throws Exception {
+        YamlConfiguration cfg = yaml("config.yml");
+        assertEquals(3, cfg.getInt("unlock.max-owned"));
+        java.util.List<java.util.Map<?, ?>> reqs = cfg.getMapList("unlock.requirements");
+        assertTrue(reqs.size() >= 3);
+        assertEquals(0, ((Number) reqs.get(0).get("points")).intValue());
+        int prev = 0;
+        for (java.util.Map<?, ?> r : reqs) {
+            int lv = ((Number) r.get("level")).intValue();
+            assertTrue(lv >= prev && lv <= 50, "yêu cầu cấp phải không giảm và ≤ 50");
+            prev = lv;
+        }
+        assertEquals("PAPER", cfg.getString("voucher.material"));
+    }
+
+    @Test
+    void premiumElementsAreVoucherOnlyAndDragonHasWings() throws Exception {
+        ConfigurationSection root = yaml("elements.yml").getConfigurationSection("elements");
+        assertEquals("VOUCHER", root.getString("DARK.obtain"));
+        assertEquals("VOUCHER", root.getString("DRAGON.obtain"));
+        for (Element e : Element.values()) {
+            if (e != Element.DARK && e != Element.DRAGON) assertNull(root.getString(e.name() + ".obtain"), e.name());
+        }
+        assertNotNull(root.getConfigurationSection("DRAGON.wings"));
+        assertEquals("DRAGON", root.getString("DRAGON.aura.pattern"));
+    }
+
+    @Test
+    void nothingCountersDragonAndLightCountersDark() throws Exception {
+        ConfigurationSection adv = yaml("elements.yml").getConfigurationSection("affinity.advantages");
+        for (String a : adv.getKeys(false)) assertFalse(adv.getStringList(a).contains("DRAGON"), a);
+        assertTrue(adv.getStringList("LIGHT").contains("DARK"));
+        assertTrue(adv.getStringList("DRAGON").contains("DARK"));
+    }
+
+    @Test
     void eachElementHasThreeValidSkills() throws Exception {
         ConfigurationSection root = yaml("skills.yml").getConfigurationSection("skills");
         assertNotNull(root);
@@ -55,9 +103,10 @@ class BundledConfigTest {
             if (s.getBoolean("ultimate")) assertTrue(s.getDouble("cooldown") >= 60, "tuyệt kỹ cần hồi chiêu dài " + id);
         }
         for (Element e : Element.values()) {
-            assertEquals(Set.of(1, 2, 3), slots.get(e), "kỹ năng của " + e);
+            Set<Integer> expected = (e == Element.DARK || e == Element.DRAGON) ? Set.of(1, 2, 3, 4) : Set.of(1, 2, 3);
+            assertEquals(expected, slots.get(e), "kỹ năng của " + e);
         }
-        assertEquals(18, root.getKeys(false).size());
+        assertEquals(26, root.getKeys(false).size());
     }
 
     @Test
@@ -89,8 +138,23 @@ class BundledConfigTest {
         YamlConfiguration m = yaml("messages.yml");
         for (String k : new String[]{"prefix", "no-permission", "data-loading", "not-awakened", "awaken.success",
                 "level-up", "cast.cooldown", "cast.no-target", "upgrade.success", "top.line", "admin.reloaded",
-                "gui.title-main", "gui.lore.skill-damage", "gui.lore.hint-upgrade", "info", "help"}) {
+                "gui.title-main", "gui.lore.skill-damage", "gui.lore.hint-upgrade", "info", "help", "voucher.item-name",
+                "voucher.redeemed", "voucher.invalid", "voucher.max", "unlock.max-reached", "unlock.voucher-only",
+                "wings.on", "wings.off", "admin.given-voucher", "gui.lore.element-voucher"}) {
             assertTrue(m.contains(k), "thiếu khóa " + k);
         }
+    }
+
+    @Test
+    void darkHasPullSkillAndLifesteal() throws Exception {
+        ConfigurationSection root = yaml("skills.yml").getConfigurationSection("skills");
+        boolean pull = false, steal = false;
+        for (String id : root.getKeys(false)) {
+            if (!"DARK".equals(root.getString(id + ".element"))) continue;
+            if (root.getDouble(id + ".effects.teleport-pull") > 0) pull = true;
+            if (root.getDouble(id + ".effects.lifesteal") > 0) steal = true;
+            assertTrue(root.getDouble(id + ".effects.lifesteal", 0) <= 0.5, id);
+        }
+        assertTrue(pull && steal);
     }
 }

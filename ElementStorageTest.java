@@ -12,6 +12,7 @@ import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.logging.Logger;
@@ -35,7 +36,7 @@ class ElementStorageTest {
 
     private PlayerSnapshot snap(UUID id, String name, String el, int level, long exp) {
         return new PlayerSnapshot(id, name, el, level, exp, 4, 2, 100, 20000, 12345L,
-                Map.of("fire_fireball", 3, "fire_blaze", 2));
+                Map.of("fire_fireball", 3, "fire_blaze", 2), Set.of("FIRE", "WIND"), false, false);
     }
 
     @Test
@@ -51,6 +52,9 @@ class ElementStorageTest {
         assertEquals(2, s.selectedSlot());
         assertEquals(3, s.skills().get("fire_fireball"));
         assertEquals(2, s.skills().get("fire_blaze"));
+        assertEquals(java.util.Set.of("FIRE", "WIND"), s.unlocked());
+        assertFalse(s.auraEnabled());
+        assertFalse(s.wingsEnabled());
     }
 
     @Test
@@ -127,5 +131,55 @@ class ElementStorageTest {
         assertTrue(SkillCodec.parse("  ").isEmpty());
         assertEquals(Map.of("a", 1), SkillCodec.parse("a=1"));
         assertEquals("", SkillCodec.serialize(Map.of()));
+        assertEquals(Set.of("A", "B"), SkillCodec.parseSet(" A, ,B,"));
+        assertEquals("A,B", SkillCodec.serializeSet(Set.of("B", "A")));
+    }
+
+    @Test
+    void oldDatabaseWithoutNewColumnsIsMigrated() throws Exception {
+        storage.close();
+        Path old = dir.resolve("old.db");
+        String oldUrl = "jdbc:sqlite:" + old;
+        UUID id = UUID.randomUUID();
+        try (Connection c = DriverManager.getConnection(oldUrl); java.sql.Statement st = c.createStatement()) {
+            st.executeUpdate("CREATE TABLE players (uuid TEXT PRIMARY KEY, name TEXT, element TEXT, level INTEGER NOT NULL DEFAULT 1,"
+                    + "exp INTEGER NOT NULL DEFAULT 0, skill_points INTEGER NOT NULL DEFAULT 0, selected_slot INTEGER NOT NULL DEFAULT 1,"
+                    + "daily_exp INTEGER NOT NULL DEFAULT 0, daily_day INTEGER NOT NULL DEFAULT 0, awakened_at INTEGER NOT NULL DEFAULT 0,"
+                    + "skills TEXT NOT NULL DEFAULT '', updated_at INTEGER NOT NULL DEFAULT 0)");
+            st.executeUpdate("INSERT INTO players (uuid, name, element, level) VALUES ('" + id + "', 'Old', 'ICE', 9)");
+        }
+        storage = new ElementStorage(oldUrl, Logger.getLogger("test"));
+        storage.init().join();
+        PlayerSnapshot s = storage.load(id).join();
+        assertEquals("ICE", s.element());
+        assertEquals(9, s.level());
+        assertTrue(s.unlocked().isEmpty());
+        assertTrue(s.auraEnabled());
+        assertTrue(s.wingsEnabled());
+    }
+
+    @Test
+    void voucherCanOnlyBeRedeemedOnceGlobally() {
+        String id = UUID.randomUUID().toString();
+        assertTrue(storage.claimVoucher(id, UUID.randomUUID()).join());
+        assertFalse(storage.claimVoucher(id, UUID.randomUUID()).join()); // bản sao của người khác cũng bị từ chối
+        assertTrue(storage.claimVoucher(UUID.randomUUID().toString(), UUID.randomUUID()).join());
+    }
+
+    @Test
+    void concurrentVoucherClaimsGrantExactlyOnce() {
+        String id = UUID.randomUUID().toString();
+        List<CompletableFuture<Boolean>> fs = new ArrayList<>();
+        for (int i = 0; i < 50; i++) fs.add(storage.claimVoucher(id, UUID.randomUUID()));
+        assertEquals(1, fs.stream().filter(f -> f.join()).count());
+    }
+
+    @Test
+    void unclaimedVoucherCanBeRedeemedAgain() {
+        String id = UUID.randomUUID().toString();
+        UUID p = UUID.randomUUID();
+        assertTrue(storage.claimVoucher(id, p).join());
+        storage.unclaimVoucher(id).join();
+        assertTrue(storage.claimVoucher(id, p).join());
     }
 }

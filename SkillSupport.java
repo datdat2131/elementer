@@ -9,6 +9,8 @@ import org.bukkit.entity.Enemy;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.EntityRegainHealthEvent;
+import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.Vector;
@@ -61,12 +63,16 @@ public final class SkillSupport {
         if (!combat.isValidTarget(p, t)) return false;
         double dmg = combat.computeDamage(d, s, sl, t) * ratio;
         if (dmg > 0 && !combat.damage(p, t, dmg)) return false;
+        double lifesteal = Math.min(0.5, s.fx("lifesteal", 0));
+        if (lifesteal > 0 && dmg > 0) {
+            healOne(p, Math.min(cfg.main().getDouble("combat.max-heal", 30.0), dmg * lifesteal), "SOUL");
+        }
         if (t.isDead()) return true;
-        applyEffects(t, s, center, ratio);
+        applyEffects(p, t, s, center, ratio);
         return true;
     }
 
-    public void applyEffects(LivingEntity t, SkillDef s, Location center, double ratio) {
+    public void applyEffects(Player caster, LivingEntity t, SkillDef s, Location center, double ratio) {
         double burn = s.fx("burn-seconds", 0);
         if (burn > 0) combat.ignite(t, burn);
         double slow = s.fx("slow-seconds", 0);
@@ -75,6 +81,13 @@ public final class SkillSupport {
         if (fr > 0) combat.freeze(t, (int) fr);
         double root = s.fx("root-seconds", 0);
         if (root > 0) combat.root(t, root);
+        double wither = s.fx("wither-seconds", 0);
+        if (wither > 0) combat.debuff(t, PotionEffectType.WITHER, wither, 0);
+        double blind = s.fx("blind-seconds", 0);
+        if (blind > 0) combat.debuff(t, PotionEffectType.BLINDNESS, blind, 0);
+        double weak = s.fx("weakness-seconds", 0);
+        if (weak > 0) combat.debuff(t, PotionEffectType.WEAKNESS, weak, 1);
+        if (s.fx("teleport-pull", 0) > 0) teleportPull(caster, t);
 
         Vector v = new Vector(0, 0, 0);
         double kb = s.fx("knockback", 0) * ratio;
@@ -93,6 +106,22 @@ public final class SkillSupport {
             if (len > 1e-4) v.add(toCenter.normalize().multiply(Math.min(pull, len * 0.5)));
         }
         if (v.lengthSquared() > 0) combat.push(t, v);
+    }
+
+    /**
+     * Kéo mục tiêu về trước mặt người dùng. Chỉ dịch chuyển nếu điểm đến thông thoáng, cùng thế giới, và
+     * (với người chơi) combat.teleport-pull-players = true. Đi qua sự kiện teleport chuẩn nên plugin khác có thể hủy.
+     */
+    private void teleportPull(Player caster, LivingEntity t) {
+        if (t instanceof Player && !cfg.main().getBoolean("combat.teleport-pull-players", true)) return;
+        Location c = caster.getLocation();
+        double yaw = Math.toRadians(c.getYaw());
+        Location dest = c.clone().add(-Math.sin(yaw) * 1.8, 0, Math.cos(yaw) * 1.8);
+        if (!dest.getBlock().isPassable() || !dest.clone().add(0, 1, 0).getBlock().isPassable()) dest = c.clone();
+        dest.setYaw(t.getLocation().getYaw());
+        dest.setPitch(t.getLocation().getPitch());
+        t.teleport(dest, PlayerTeleportEvent.TeleportCause.PLUGIN);
+        Fx.particle(dest.clone().add(0, 1, 0), "PORTAL", 25, 0.3, 0.6, 0.3, 0.3);
     }
 
     /** Mục tiêu hợp lệ quanh một điểm, gần nhất trước, tối đa combat.max-targets-per-cast. */

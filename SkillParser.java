@@ -55,8 +55,8 @@ final class SkillParser {
             return null;
         }
         int slot = s.getInt("slot", 0);
-        if (slot < 1 || slot > 3) {
-            log.warning("Kỹ năng '" + id + "': slot phải là 1-3 - bỏ qua.");
+        if (slot < 1 || slot > PlayerData.MAX_SKILL_SLOTS) {
+            log.warning("Kỹ năng '" + id + "': slot phải là 1-4 - bỏ qua.");
             return null;
         }
         if (!usedSlots.add(el + ":" + slot)) {

@@ -1,7 +1,10 @@
 package com.astrax.elementer;
 
+import java.util.HashSet;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 /** Mã hóa cấp kỹ năng thành chuỗi "id=lv;id=lv" để lưu trong một cột. */
 public final class SkillCodec {
@@ -31,5 +34,20 @@ public final class SkillCodec {
             }
         }
         return m;
+    }
+
+    /** Tập hợp tên (ví dụ nguyên tố đã mở khóa) thành "A,B,C". */
+    public static String serializeSet(Set<String> names) {
+        return names == null || names.isEmpty() ? "" : String.join(",", new TreeSet<>(names));
+    }
+
+    public static Set<String> parseSet(String raw) {
+        Set<String> out = new HashSet<>();
+        if (raw == null || raw.isBlank()) return out;
+        for (String p : raw.split(",")) {
+            String t = p.trim();
+            if (!t.isEmpty()) out.add(t);
+        }
+        return out;
     }
 }

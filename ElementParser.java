@@ -65,7 +65,8 @@ final class ElementParser {
             out.put(e, new ElementDef(e, s.getString("name", e.name()), s.getString("symbol", ""),
                     s.getString("color", "&f"), icon, s.getStringList("description"),
                     Math.max(0, s.getDouble("damage-per-level", 0.02)), Math.max(0, s.getDouble("undead-bonus", 0)),
-                    attributes(s, e), reductions(s, e), proc(s, e)));
+                    attributes(s, e), reductions(s, e), proc(s, e), aura(s, e),
+                    "VOUCHER".equalsIgnoreCase(s.getString("obtain", "LEVEL")), wings(s)));
         }
         return out;
     }
@@ -111,6 +112,29 @@ final class ElementParser {
             return null;
         }
         return new ProcDef(type, ps.getDouble("chance"), ps.getDouble("chance-per-level"), ps.getDouble("seconds", 2));
+    }
+
+    private AuraDef aura(ConfigurationSection s, Element e) {
+        ConfigurationSection a = s.getConfigurationSection("aura");
+        if (a == null) return null;
+        String pattern = a.getString("pattern", "RING").toUpperCase(Locale.ROOT);
+        if (!Set.of("RING", "DOUBLE_RING", "SPIRAL", "HELIX", "DRAGON").contains(pattern)) {
+            log.warning("aura.pattern không hợp lệ ở " + e + " (RING, DOUBLE_RING, SPIRAL, HELIX, DRAGON) - dùng RING.");
+            pattern = "RING";
+        }
+        String accent = a.getString("accent-particle", "");
+        String spark = a.getString("spark-particle", "");
+        return new AuraDef(Math.max(1, a.getInt("unlock-level", 5)), a.getString("particle", "CRIT"),
+                accent.isBlank() ? null : accent, spark.isBlank() ? null : spark, Math.max(0.3, Math.min(2.5, a.getDouble("radius", 0.9))),
+                Math.max(4, Math.min(24, a.getInt("points", 10))), pattern);
+    }
+
+    private WingsDef wings(ConfigurationSection s) {
+        ConfigurationSection w = s.getConfigurationSection("wings");
+        if (w == null) return null;
+        return new WingsDef(Math.max(1, w.getInt("unlock-level", 1)), w.getString("bone-particle", "FLAME"),
+                w.getString("membrane-particle", "PORTAL"), Math.max(0.4, Math.min(2.0, w.getDouble("scale", 1.0))),
+                Math.max(0, Math.min(60, w.getDouble("flap-degrees", 25))));
     }
 
     AffinityTable affinity(YamlConfiguration y) {

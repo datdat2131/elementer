@@ -23,7 +23,7 @@ class PluginYmlTest {
     void everyCommandPermissionIsDeclared() throws Exception {
         ConfigurationSection perms = plugin().getConfigurationSection("permissions");
         assertNotNull(perms);
-        for (String p : List.of("main", "info", "skills", "stats", "top", "cast", "select", "awaken")) {
+        for (String p : List.of("main", "info", "skills", "stats", "top", "cast", "select", "awaken", "unlock", "switch", "aura", "wings")) {
             assertNotNull(perms.getConfigurationSection("elementer.command." + p), p);
             assertEquals("true", perms.getString("elementer.command." + p + ".default"));
         }
@@ -31,6 +31,11 @@ class PluginYmlTest {
             assertNotNull(perms.getConfigurationSection("elementer.admin." + p), p);
             assertEquals("op", perms.getString("elementer.admin." + p + ".default"));
         }
+    }
+
+    @Test
+    void voucherPermissionDeclared() throws Exception {
+        assertEquals("true", plugin().getString("permissions.elementer.voucher.use.default"));
     }
 
     @Test

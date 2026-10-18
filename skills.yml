@@ -1,11 +1,12 @@
-# Kỹ năng. Mỗi nguyên tố đúng 3 kỹ năng (slot 1-3): 1 = cơ bản, 2 = nâng cao, 3 = tuyệt kỹ.
+# Kỹ năng. Nguyên tố thường có 3 kỹ năng (slot 1-3, slot 3 = tuyệt kỹ); Bóng Tối và Rồng có 4 kỹ năng (slot 4 = tuyệt kỹ).
 # type: PROJECTILE | AOE_SELF | AOE_TARGET | STRIKE_TARGET | DASH | SHIELD | HEAL_AREA
 # damage: sát thương gốc (cấp kỹ năng 1)   cooldown: giây   range/radius: block   duration: giây   power: sức mạnh riêng (khiên/hồi máu/lực lướt)
 # per-level-bonus: +% hiệu quả mỗi cấp kỹ năng    upgrade-cost: điểm kỹ năng cho lần nâng đầu (lần sau nhân theo cấp hiện tại)
 # particle: tên Particle (không cần dữ liệu thêm)   sound: key âm thanh vanilla
 # effects (tùy chọn): burn-seconds, slow-seconds, slow-amplifier, freeze-ticks, root-seconds, knockback, lift, pull,
 #   pierce, splash-damage-ratio, repeat, interval-ticks, delay-ticks, lightning-visual, hostile-only, heal-allies,
-#   heal-others, undead-multiplier, resistance-seconds, resistance-amplifier, self-slow-amplifier, slow-falling-seconds
+#   heal-others, undead-multiplier, resistance-seconds, resistance-amplifier, self-slow-amplifier, slow-falling-seconds,
+#   wither-seconds, blind-seconds, weakness-seconds, lifesteal (hút máu theo % sát thương, tối đa 0.5), teleport-pull (kéo mục tiêu về trước mặt)
 skills:
   # ------------------------------------------------------------------ HỎA
   fire_fireball:
@@ -338,3 +339,150 @@ skills:
     particle: END_ROD
     sound: "block.beacon.power_select"
     effects: { hostile-only: 1, undead-multiplier: 1.5, heal-allies: 10 }
+
+  # ------------------------------------------------------------------ BÓNG TỐI (giới hạn)
+  dark_bolt:
+    element: DARK
+    slot: 1
+    name: "Hắc Tiễn"
+    icon: WITHER_ROSE
+    description: ["&7Mũi tên bóng tối xuyên 2 mục tiêu, gây Wither và hút máu."]
+    type: PROJECTILE
+    unlock-level: 1
+    cooldown: 4
+    damage: 11.0
+    range: 30
+    radius: 0
+    max-level: 5
+    per-level-bonus: 0.12
+    upgrade-cost: 1
+    particle: SQUID_INK
+    sound: "entity.wither.shoot"
+    effects: { pierce: 1, wither-seconds: 3, lifesteal: 0.2, knockback: 0.2 }
+  dark_pull:
+    element: DARK
+    slot: 2
+    name: "Kéo Hồn"
+    icon: ENDER_EYE
+    description: ["&7Kéo mọi kẻ địch trong tầm về ngay trước mặt bạn và trói chặt trong chốc lát."]
+    type: AOE_SELF
+    unlock-level: 10
+    cooldown: 16
+    damage: 6.0
+    radius: 10
+    max-level: 5
+    per-level-bonus: 0.12
+    upgrade-cost: 1
+    particle: PORTAL
+    sound: "entity.enderman.teleport"
+    effects: { teleport-pull: 1, root-seconds: 1.5, slow-seconds: 2, slow-amplifier: 1 }
+  dark_abyss:
+    element: DARK
+    slot: 3
+    name: "Vực Thẳm"
+    icon: CRYING_OBSIDIAN
+    description: ["&7Mở vực thẳm tại điểm nhắm: gây mù, Wither và hút máu liên tục."]
+    type: AOE_TARGET
+    unlock-level: 20
+    cooldown: 28
+    damage: 12.0
+    range: 28
+    radius: 5
+    max-level: 5
+    per-level-bonus: 0.12
+    upgrade-cost: 1
+    particle: SOUL
+    sound: "entity.wither.ambient"
+    effects: { delay-ticks: 15, repeat: 3, interval-ticks: 10, blind-seconds: 3, wither-seconds: 4, lifesteal: 0.25, slow-seconds: 3, slow-amplifier: 1 }
+  dark_eclipse:
+    element: DARK
+    slot: 4
+    name: "Nhật Thực"
+    icon: WITHER_SKELETON_SKULL
+    description: ["&7Bóng tối nuốt chửng vùng quanh bạn: hút kẻ địch vào tâm, gây mù, suy yếu và hút máu."]
+    type: AOE_SELF
+    ultimate: true
+    unlock-level: 30
+    cooldown: 100
+    damage: 20.0
+    radius: 9
+    max-level: 5
+    per-level-bonus: 0.10
+    upgrade-cost: 2
+    particle: SQUID_INK
+    sound: "entity.wither.ambient"
+    effects: { wither-seconds: 5, blind-seconds: 3, weakness-seconds: 5, pull: 1.2, lifesteal: 0.25, repeat: 4, interval-ticks: 10 }
+
+  # ------------------------------------------------------------------ RỒNG (giới hạn)
+  dragon_breath:
+    element: DRAGON
+    slot: 1
+    name: "Long Tức"
+    icon: DRAGON_BREATH
+    description: ["&7Hơi thở rồng xuyên 4 mục tiêu và thiêu đốt."]
+    type: PROJECTILE
+    unlock-level: 1
+    cooldown: 5
+    damage: 10.0
+    range: 20
+    radius: 0
+    max-level: 5
+    per-level-bonus: 0.12
+    upgrade-cost: 1
+    particle: FLAME
+    sound: "entity.ender_dragon.shoot"
+    effects: { pierce: 3, burn-seconds: 4, knockback: 0.4 }
+  dragon_dive:
+    element: DRAGON
+    slot: 2
+    name: "Long Phi"
+    icon: FIREWORK_ROCKET
+    description: ["&7Lao đi như rồng, gây sát thương và thiêu đốt ở điểm đến; rơi chậm sau đó."]
+    type: DASH
+    unlock-level: 10
+    cooldown: 9
+    damage: 8.0
+    radius: 3.5
+    power: 2.1
+    max-level: 5
+    per-level-bonus: 0.12
+    upgrade-cost: 1
+    particle: FLAME
+    sound: "entity.ender_dragon.flap"
+    effects: { slow-falling-seconds: 4, burn-seconds: 3, knockback: 0.8 }
+  dragon_roar:
+    element: DRAGON
+    slot: 3
+    name: "Long Uy"
+    icon: DRAGON_EGG
+    description: ["&7Tiếng gầm rồng: hất văng, làm chậm và làm suy yếu kẻ địch xung quanh."]
+    type: AOE_SELF
+    unlock-level: 20
+    cooldown: 22
+    damage: 12.0
+    radius: 8
+    max-level: 5
+    per-level-bonus: 0.12
+    upgrade-cost: 1
+    particle: END_ROD
+    sound: "entity.ender_dragon.growl"
+    effects: { knockback: 1.4, slow-seconds: 3, slow-amplifier: 2, weakness-seconds: 5 }
+  dragon_descent:
+    element: DRAGON
+    slot: 4
+    name: "Long Thần Giáng Thế"
+    icon: DRAGON_HEAD
+    description: ["&7Rồng thần giáng xuống điểm nhắm: lửa và sét hủy diệt liên hồi."]
+    type: AOE_TARGET
+    ultimate: true
+    unlock-level: 30
+    cooldown: 120
+    damage: 22.0
+    range: 32
+    radius: 7
+    max-level: 5
+    per-level-bonus: 0.10
+    upgrade-cost: 2
+    particle: FLAME
+    sound: "entity.ender_dragon.growl"
+    effects: { delay-ticks: 25, repeat: 3, interval-ticks: 12, burn-seconds: 6, knockback: 1.2, lightning-visual: 1 }

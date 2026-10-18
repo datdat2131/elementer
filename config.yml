@@ -10,8 +10,29 @@ input:
   swap-key-cast: true   # Phím F (đổi tay) = tung kỹ năng đang chọn; Shift+F = đổi kỹ năng
 
 awaken:
-  allow-change: false   # cho phép người chơi tự đổi nguyên tố đã thức tỉnh
-  confirm-seconds: 8    # thời gian xác nhận khi bấm chọn nguyên tố
+  confirm-seconds: 8    # thời gian xác nhận khi bấm mở khóa nguyên tố trong GUI
+
+# Nhiều nguyên tố: cấp độ, EXP và điểm kỹ năng dùng chung; mỗi nguyên tố có kỹ năng và cấp kỹ năng riêng.
+unlock:
+  max-owned: 3          # TỐI ĐA số nguyên tố một người chơi được sở hữu (kể cả nguyên tố giới hạn nhận bằng vé)
+  # Điều kiện mở khóa nguyên tố thứ N bằng cấp + điểm kỹ năng (N = số nguyên tố đã có + 1). Nguyên tố đầu tiên miễn phí.
+  # Nguyên tố giới hạn (obtain: VOUCHER trong elements.yml) KHÔNG mở khóa theo cách này mà chỉ nhận bằng Vé Nguyên Tố.
+  requirements:
+    - { level: 1, points: 0 }
+    - { level: 15, points: 3 }
+    - { level: 30, points: 6 }
+
+voucher:
+  material: PAPER       # vật phẩm dùng làm vé; chuột phải để sở hữu nguyên tố
+  glow: true
+
+switch:
+  cooldown-seconds: 30  # hồi chiêu giữa hai lần chuyển nguyên tố (chống đổi liên tục trong giao tranh)
+
+aura:
+  enabled: true
+  interval-ticks: 6     # tần suất vẽ hào quang (20 tick = 1 giây); tăng lên để giảm tải khi đông người
+  hide-when-sneaking: true
 
 exp:
   max-level: 50
@@ -101,6 +122,8 @@ combat:
   max-shield-seconds: 15.0
   max-heal: 30.0
   max-burn-seconds: 10.0
+  max-debuff-seconds: 8.0          # trần Wither/Weakness...
+  teleport-pull-players: true      # cho phép kỹ năng kéo (dịch chuyển) người chơi khác
   cooldown-reduction-per-level: 0.03   # giảm hồi chiêu mỗi cấp kỹ năng
   max-cooldown-reduction: 0.3
   min-cooldown-seconds: 1.0

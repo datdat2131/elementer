@@ -28,8 +28,11 @@ final class SkillPage {
         Inventory inv = ui.create(GuiHolder.Page.SKILLS, 27, "gui.title-skills");
         inv.setItem(4, ui.item(Material.EXPERIENCE_BOTTLE,
                 Messages.format(ui.raw("gui.points-button"), "points", d.getSkillPoints()), null, false));
-        for (SkillDef s : cfg.skillsOf(d.getElement())) {
-            inv.setItem(GuiHolder.SKILL_SLOTS[s.slot() - 1], skillItem(d, def, s));
+        List<SkillDef> list = cfg.skillsOf(d.getElement());
+        int[] slots = GuiHolder.skillSlots(list.size());
+        for (SkillDef s : list) {
+            int idx = Math.min(slots.length - 1, s.slot() - 1);
+            inv.setItem(slots[idx], skillItem(d, def, s));
         }
         inv.setItem(22, ui.item(Material.ARROW, ui.raw("gui.back"), null, false));
         p.openInventory(inv);

@@ -6,8 +6,13 @@ Plugin nguyên tố RPG cho server **BoxMine RPG** – Paper **1.21.4**, **Java 
 
 ## Tính năng đã triển khai (Giai đoạn 1)
 
-- 6 nguyên tố: Hỏa, Băng, Lôi, Thổ, Phong, Quang – màu, biểu tượng, nội tại (attribute + giảm sát thương + proc đánh thường) cấu hình trong `elements.yml`.
-- Thức tỉnh (GUI hoặc `/elementer awaken`), EXP, cấp 1–50, điểm kỹ năng, mở khóa kỹ năng theo cấp, nâng cấp từng kỹ năng bằng điểm.
+- 8 nguyên tố: Hỏa, Băng, Lôi, Thổ, Phong, Quang và hai nguyên tố **giới hạn** Bóng Tối, Rồng – màu, biểu tượng, nội tại (attribute + giảm sát thương + proc đánh thường) cấu hình trong `elements.yml`.
+- **Nhiều nguyên tố, tối đa 3:** mỗi người chơi chỉ được sở hữu tối đa 3 nguyên tố (`unlock.max-owned`). Nguyên tố đầu miễn phí; nguyên tố thường thứ 2/3 mở khóa bằng **cấp + điểm kỹ năng** (`unlock.requirements`, mặc định cấp 15 + 3 điểm và cấp 30 + 6 điểm). Chuyển nguyên tố đang dùng bằng GUI hoặc `/elementer switch`, có hồi chiêu chuyển (`switch.cooldown-seconds`). **Cấp độ, EXP, điểm kỹ năng dùng chung** cho mọi nguyên tố; cấp từng kỹ năng lưu riêng.
+- **Bóng Tối (giới hạn, 4 kỹ năng):** Hắc Tiễn (xuyên, Wither, hút máu), **Kéo Hồn (kéo kẻ địch về trước mặt mình + trói ngắn)**, Vực Thẳm (mù, Wither, hút máu liên tục), Nhật Thực (tuyệt kỹ). Sát thương nền cao nhất game, khắc 5 nguyên tố cơ bản, bị Quang và Rồng khắc.
+- **Rồng (giới hạn, 4 kỹ năng):** Long Tức (xuyên 4 mục tiêu), Long Phi (lao + rơi chậm), Long Uy (gầm hất văng, làm chậm/suy yếu), Long Thần Giáng Thế (tuyệt kỹ). Hào quang nhiều lớp kiểu `DRAGON` và **đôi cánh rồng bằng hạt** vỗ theo chuyển động (bật/tắt `/elementer wings`). Khắc mọi nguyên tố; không nguyên tố nào khắc Rồng.
+- **Vé Nguyên Tố (tờ giấy):** nguyên tố giới hạn chỉ nhận bằng vé; **chuột phải** để sở hữu. Mỗi vé có mã duy nhất được ghi trong DB nên vé bị nhân bản chỉ dùng được một lần; vé không mất nếu bạn đã có nguyên tố đó hoặc đã đủ 3 nguyên tố. Tích hợp nạp thẻ: cho plugin cửa hàng/nạp chạy lệnh console `elementeradmin give %player% voucher dark` (hoặc `rong`).
+- **Hào quang dưới chân:** mỗi nguyên tố một hào quang riêng (hạt + kiểu RING/DOUBLE_RING/SPIRAL), mở khóa ở cấp 5, bật/tắt bằng `/elementer aura` hoặc nút trong GUI; ẩn khi tàng hình/ngồi xổm/đang lướt/bơi. Tinh chỉnh trong `elements.yml` (mục `aura`) và `config.yml` (mục `aura`).
+- Thức tỉnh, EXP, cấp 1–50, điểm kỹ năng, mở khóa kỹ năng theo cấp, nâng cấp từng kỹ năng bằng điểm.
 - 18 kỹ năng có logic thật (sát thương/khống chế/hồi máu/khiên/lướt) + hiệu ứng hạt và âm thanh:
   Hỏa Cầu, Bùng Cháy, Thiên Hỏa · Băng Tiễn, Sương Giá, Băng Ngục · Lôi Bộ, Sét Đánh, Thiên Lôi · Thạch Giáp, Địa Chấn, Pháo Đài · Phong Bộ, Lưỡi Gió, Lốc Xoáy · Quang Thuẫn, Ánh Sáng Phục Hồi, Thánh Quang.
 - Tương khắc vòng tròn Hỏa→Băng→Phong→Thổ→Lôi→Hỏa (Quang trung lập, mạnh hơn trước xác sống); áp dụng cả với quái (`mob-elements`).
@@ -19,7 +24,7 @@ Plugin nguyên tố RPG cho server **BoxMine RPG** – Paper **1.21.4**, **Java 
 
 ## Chưa có trong bản này (Giai đoạn 2–3)
 
-MySQL, Element Mastery, tinh thể nguyên tố, thử thách, Boss, thành tựu, danh hiệu, ngoại hình/hào quang, nhánh nâng cấp theo nhánh, tổ hợp hai nguyên tố, tích hợp AstraxQuest / AstraxPetRPG / Vault / PlaceholderAPI, hỗ trợ BoxMine (đào nhanh, độ bền cuốc…), `/elementeradmin give crystal`. Cấu hình `database.type: mysql` hiện sẽ cảnh báo và dùng SQLite.
+MySQL, Element Mastery, cấp độ riêng cho từng nguyên tố, tích hợp trực tiếp cổng nạp (hiện dùng lệnh console), tinh thể nguyên tố, thử thách, Boss, thành tựu, danh hiệu, ngoại hình/hào quang, nhánh nâng cấp theo nhánh, tổ hợp hai nguyên tố, tích hợp AstraxQuest / AstraxPetRPG / Vault / PlaceholderAPI, hỗ trợ BoxMine (đào nhanh, độ bền cuốc…), `/elementeradmin give crystal`. Cấu hình `database.type: mysql` hiện sẽ cảnh báo và dùng SQLite.
 
 ## Bố cục phẳng
 
@@ -55,8 +60,14 @@ Driver SQLite được đóng gói sẵn trong JAR (maven-shade), không cần t
 | `/elementer cast [1-3]` và phím F | `elementer.command.cast` | mọi người |
 | `/elementer select <1-3>` | `elementer.command.select` | mọi người |
 | `/elementer awaken <nguyên tố>` | `elementer.command.awaken` | mọi người |
+| `/elementer unlock <nguyên tố>` | `elementer.command.unlock` | mọi người |
+| `/elementer switch <nguyên tố>` | `elementer.command.switch` | mọi người |
+| `/elementer aura [on\|off]` | `elementer.command.aura` | mọi người |
+| `/elementer wings [on\|off]` | `elementer.command.wings` | mọi người |
+| Chuột phải vé nguyên tố | `elementer.voucher.use` | mọi người |
 | `/elementeradmin reload` | `elementer.admin.reload` | op |
 | `/elementeradmin give <người chơi> <exp\|points> <số>` | `elementer.admin.give` | op |
+| `/elementeradmin give <người chơi> voucher <nguyên tố> [1-10]` | `elementer.admin.give` | op |
 | `/elementeradmin set <người chơi> <element\|level\|exp\|points> <giá trị>` | `elementer.admin.set` | op |
 | `/elementeradmin reset <người chơi>` | `elementer.admin.reset` | op |
 
@@ -83,9 +94,9 @@ Mẹo cân bằng: sát thương thực = `damage × (1 + per-level-bonus×(cấ
 
 ## Kiểm thử
 
-Bộ test JUnit 5 (`src/test`): EXP/lên cấp, hồi chiêu, công thức sát thương + tương khắc, kiểm tra/sửa dữ liệu hỏng, lưu/tải SQLite, **chống nhận thưởng trùng** (kể cả 50 yêu cầu đồng thời), xếp hạng, khai báo quyền trong `plugin.yml`, và kiểm tra YAML mẫu (đủ 6×3 kỹ năng, trong trần).
+Bộ test JUnit 5 (`src/test`): EXP/lên cấp, hồi chiêu, công thức sát thương + tương khắc, kiểm tra/sửa dữ liệu hỏng, lưu/tải SQLite, **chống nhận thưởng trùng** (kể cả 50 yêu cầu đồng thời), xếp hạng, khai báo quyền trong `plugin.yml`, và kiểm tra YAML mẫu (đủ 8 nguyên tố, 26 kỹ năng, trong trần).
 
-Đã thực sự chạy ở môi trường soạn thảo: các test thuần logic (`ExpCurveTest`, `CooldownTrackerTest`, `DamageCalculatorTest`, `DataSanitizerTest` – 20 test đạt) và kiểm tra cú pháp toàn bộ mã nguồn. **Chưa chạy:** test SQLite, test YAML/quyền (cần Maven + thư viện) và mọi thứ cần server thật.
+Đã thực sự chạy ở môi trường soạn thảo: các test thuần logic (`ExpCurveTest`, `CooldownTrackerTest`, `DamageCalculatorTest`, `DataSanitizerTest`, `WingsGeometryTest` – 26 test đạt) và kiểm tra cú pháp toàn bộ mã nguồn. **Chưa chạy:** test SQLite, test YAML/quyền (cần Maven + thư viện) và mọi thứ cần server thật.
 
 **Chưa có test tự động** cho các tình huống cần server (chết, thoát game, đổi thế giới, đổi mục tiêu, spam kỹ năng). Danh sách kiểm tra thủ công trên server test:
 
@@ -100,6 +111,14 @@ Bộ test JUnit 5 (`src/test`): EXP/lên cấp, hồi chiêu, công thức sát 
 - [ ] Vùng WorldGuard cấm PvP: kỹ năng không gây sát thương/khống chế người chơi.
 
 ## Giới hạn đã biết
+
+- Cánh rồng và hào quang là hiệu ứng hạt (chỉ trang trí, **không cho bay**). Cánh dùng khoảng 55 hạt mỗi nhịp, hào quang Rồng khoảng 40: nếu server đông người dùng Rồng hãy tăng `aura.interval-ticks`.
+- Chưa có lệnh bỏ/đổi một nguyên tố đã sở hữu (giới hạn 3 là vĩnh viễn trừ khi quản trị `reset`). Vé giới hạn có thể giao dịch/bán lại giữa người chơi.
+- **Kéo Hồn** dịch chuyển cả người chơi khác bằng sự kiện teleport chuẩn (plugin vùng bảo vệ có thể hủy) và chỉ kéo khi đòn sát thương không bị hủy; tắt hẳn việc kéo người chơi bằng `combat.teleport-pull-players: false`.
+- Biểu tượng nguyên tố (emoji/ký tự đặc biệt) có thể hiển thị ô vuông tùy font client; đổi `symbol` trong `elements.yml`.
+- Hào quang gửi hạt cho mọi người chơi ở gần: server đông có thể tăng `aura.interval-ticks` hoặc tắt `aura.enabled`. Mỗi người chơi vẽ tối đa ~12 hạt mỗi nhịp.
+- Nâng cấp từ bản cũ: cột `unlocked` và `aura_enabled` được thêm tự động vào DB; người chơi cũ mặc định sở hữu nguyên tố đang dùng. Cơ chế này mới có test viết sẵn (chưa chạy được ngoài Maven).
+- Bảng xếp hạng hiển thị nguyên tố đang dùng.
 
 - Chưa biên dịch với Paper API thật: có thể còn lỗi biên dịch nhỏ ở các lớp dùng Bukkit (tên API đã viết theo Paper 1.21.4 nhưng chưa được compiler xác nhận). Gửi log `mvn` để sửa.
 - Không có hệ thống party: **Ánh Sáng Phục Hồi** hồi cho mọi người chơi trong bán kính (có thể tắt bằng `effects.heal-others` trong `skills.yml`).

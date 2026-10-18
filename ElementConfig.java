@@ -36,6 +36,7 @@ public final class ElementConfig {
     private volatile Map<EntityType, Integer> mobExp = Map.of();
     private volatile Map<Integer, LevelReward> levelRewards = Map.of();
     private volatile Set<String> disabledWorlds = Set.of();
+    private volatile List<UnlockReq> unlockReqs = List.of();
 
     public ElementConfig(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -68,6 +69,7 @@ public final class ElementConfig {
         this.mobExp = parseMobExp();
         this.levelRewards = parseRewards();
         this.disabledWorlds = new HashSet<>(main.getStringList("disabled-worlds"));
+        this.unlockReqs = parseUnlock();
         Fx.setEnabled(main.getBoolean("effects.particles", true));
 
         for (Element e : Element.values()) {
@@ -103,6 +105,17 @@ public final class ElementConfig {
             else out.put(t, Math.max(0, s.getInt(k)));
         }
         return out;
+    }
+
+    private List<UnlockReq> parseUnlock() {
+        List<UnlockReq> out = new java.util.ArrayList<>();
+        for (Map<?, ?> m : main.getMapList("unlock.requirements")) {
+            int level = m.get("level") instanceof Number n ? n.intValue() : 1;
+            int points = m.get("points") instanceof Number n ? n.intValue() : 0;
+            out.add(new UnlockReq(Math.max(1, level), Math.max(0, points)));
+        }
+        if (out.isEmpty()) log.warning("config.yml thiếu unlock.requirements - dùng mặc định (cấp 1, 0 điểm).");
+        return List.copyOf(out);
     }
 
     private Map<Integer, LevelReward> parseRewards() {
@@ -148,6 +161,12 @@ public final class ElementConfig {
     public boolean isProtected(EntityType t) { return protectedTypes.contains(t); }
     public Integer miningExp(Material m) { return miningExp.get(m); }
     public Integer mobExp(EntityType t) { return mobExp.get(t); }
+    /** Điều kiện mở khóa nguyên tố kế tiếp khi đã sở hữu {@code owned} nguyên tố (dùng mục cuối nếu vượt danh sách). */
+    public UnlockReq unlockReq(int owned) {
+        if (unlockReqs.isEmpty()) return new UnlockReq(1, 0);
+        return unlockReqs.get(Math.min(Math.max(0, owned), unlockReqs.size() - 1));
+    }
+
     public Map<Integer, LevelReward> levelRewards() { return levelRewards; }
     public boolean isWorldDisabled(String world) { return disabledWorlds.contains(world); }
 }

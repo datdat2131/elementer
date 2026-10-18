@@ -62,7 +62,8 @@ public final class PlayerListener implements Listener {
         if (!p.hasPermission("elementer.command.cast")) return;
         e.setCancelled(true);
         if (p.isSneaking()) {
-            int next = d.getSelectedSlot() % 3 + 1;
+            int count = Math.max(1, cfg.skillsOf(d.getElement()).size());
+            int next = d.getSelectedSlot() % count + 1;
             d.setSelectedSlot(next);
             SkillDef s = cfg.skill(d.getElement(), next);
             if (s != null) cfg.messages().actionBar(p, "cast.selected", "slot", next, "name", s.name());

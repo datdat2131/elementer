@@ -19,8 +19,6 @@ import java.util.logging.Level;
 
 /** Dữ liệu người chơi online: tải/lưu bất đồng bộ, thức tỉnh, EXP, lên cấp và các thao tác quản trị. */
 public final class ElementService {
-    public enum AwakenResult { OK, NO_DATA, DISABLED, ALREADY }
-
     private final ElementerCore plugin;
     private final ElementConfig cfg;
     private final ElementStorage storage;
@@ -28,6 +26,7 @@ public final class ElementService {
     private final PassiveService passives;
     private final RewardService rewards;
     private final ElementInfo info;
+    private final ElementOwnership ownership;
     private SkillService skills;
 
     private final Map<UUID, PlayerData> cache = new HashMap<>();
@@ -42,12 +41,14 @@ public final class ElementService {
         this.passives = new PassiveService(plugin, cfg);
         this.rewards = new RewardService(plugin, cfg, storage);
         this.info = new ElementInfo(cfg);
+        this.ownership = new ElementOwnership(cfg, this, combat);
     }
 
     public void bind(SkillService skills) { this.skills = skills; }
 
     public PlayerData get(Player p) { return cache.get(p.getUniqueId()); }
     public PlayerData get(UUID id) { return cache.get(id); }
+    public ElementOwnership ownership() { return ownership; }
 
     // ---- hiển thị / nội tại (ủy quyền)
     public List<String> infoLines(PlayerData d) { return info.infoLines(d); }
@@ -68,6 +69,7 @@ public final class ElementService {
             long now = System.currentTimeMillis();
             combat.maintenance(now);
             skills.maintenance(now);
+            ownership.purge(now);
         }, period, period);
     }
 
@@ -105,6 +107,7 @@ public final class ElementService {
         PlayerData d = cache.remove(id);
         combat.clear(id);
         skills.clear(id);
+        ownership.clear(id);
         removePassives(p);
         if (d != null && d.isDirty()) {
             d.clearDirty();
@@ -149,26 +152,6 @@ public final class ElementService {
     }
 
     public CompletableFuture<List<TopEntry>> top(int limit) { return storage.top(limit); }
-
-    // ------------------------------------------------------------------ Thức tỉnh
-
-    public AwakenResult awaken(Player p, Element e) {
-        PlayerData d = get(p);
-        if (d == null) return AwakenResult.NO_DATA;
-        if (cfg.element(e) == null) return AwakenResult.DISABLED;
-        if (d.getElement() != null && (!cfg.main().getBoolean("awaken.allow-change", false) || d.getElement() == e)) {
-            return AwakenResult.ALREADY;
-        }
-        boolean changing = d.getElement() != null;
-        d.setElement(e);
-        d.setAwakenedAt(System.currentTimeMillis());
-        if (changing) {
-            d.clearSkillLevels();
-            d.setSelectedSlot(1);
-        }
-        applyPassives(p);
-        return AwakenResult.OK;
-    }
 
     // ------------------------------------------------------------------ EXP
 
@@ -233,14 +216,12 @@ public final class ElementService {
         d.setExp(req == 0 ? 0 : Math.min(Math.max(0, exp), req - 1));
     }
 
+    /** Quản trị: đặt nguyên tố đang dùng (đồng thời mở khóa nó). */
     public void setElement(Player p, Element e) {
         PlayerData d = get(p);
-        if (d == null) return;
-        d.setElement(e);
-        if (e != null && d.getAwakenedAt() == 0) d.setAwakenedAt(System.currentTimeMillis());
-        d.clearSkillLevels();
-        d.setSelectedSlot(1);
-        applyPassives(p);
+        if (d == null || e == null) return;
+        if (d.getAwakenedAt() == 0) d.setAwakenedAt(System.currentTimeMillis());
+        ownership.activate(p, d, e);
     }
 
     public void reset(Player p) {

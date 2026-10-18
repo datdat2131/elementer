@@ -1,6 +1,8 @@
 package com.astrax.elementer;
 
+import java.util.EnumSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.logging.Level;
@@ -23,6 +25,19 @@ public final class DataSanitizer {
                     new Object[]{s.uuid(), s.element()});
         }
         d.setElement(el);
+        Set<Element> owned = EnumSet.noneOf(Element.class);
+        if (s.unlocked() != null) {
+            for (String n : s.unlocked()) {
+                Element u = Element.parse(n);
+                if (u == null) log.log(Level.WARNING, "Bỏ qua nguyên tố đã mở khóa không hợp lệ ''{0}'' của {1}.",
+                        new Object[]{n, s.uuid()});
+                else owned.add(u);
+            }
+        }
+        if (el != null) owned.add(el); // dữ liệu cũ (một nguyên tố) và đảm bảo nguyên tố đang dùng luôn được sở hữu
+        for (Element u : owned) d.unlock(u);
+        d.setAuraEnabled(s.auraEnabled());
+        d.setWingsEnabled(s.wingsEnabled());
         int level = (int) DataSanitizerHelper.clamp(s.level(), 1, curve.maxLevel());
         if (level != s.level()) log.log(Level.WARNING, "Cấp độ không hợp lệ ({0}) của {1} - đã sửa thành {2}.",
                 new Object[]{s.level(), s.uuid(), level});

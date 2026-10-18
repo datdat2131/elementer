@@ -108,6 +108,9 @@ public final class CombatService {
     public boolean root(LivingEntity t, double seconds) { return control.root(t, seconds); }
     public void slow(LivingEntity t, double seconds, int amplifier) { control.slow(t, seconds, amplifier); }
     public void freeze(LivingEntity t, int ticks) { control.freeze(t, ticks); }
+    public void debuff(LivingEntity t, org.bukkit.potion.PotionEffectType type, double seconds, int amplifier) {
+        control.debuff(t, type, seconds, amplifier);
+    }
     public void ignite(LivingEntity t, double seconds) { control.ignite(t, seconds); }
     public void push(LivingEntity t, Vector v) { control.push(t, v); }
 

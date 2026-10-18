@@ -42,6 +42,18 @@ public final class ControlService {
         t.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, (int) Math.round(sec * 20), amp, false, true, true));
     }
 
+    /**
+     * Hiệu ứng xấu có thời hạn (Wither, Weakness...), trần combat.max-debuff-seconds.
+     * Mù (BLINDNESS) tính là khống chế nên dùng trần max-control-seconds.
+     */
+    public void debuff(LivingEntity t, PotionEffectType type, double seconds, int amplifier) {
+        boolean control = PotionEffectType.BLINDNESS.equals(type);
+        double cap = control ? maxControl() : cfg.main().getDouble("combat.max-debuff-seconds", 8.0);
+        double sec = Math.min(cap, seconds);
+        if (sec <= 0) return;
+        t.addPotionEffect(new PotionEffect(type, (int) Math.round(sec * 20), Math.max(0, Math.min(3, amplifier)), false, true, true));
+    }
+
     public void freeze(LivingEntity t, int ticks) {
         int capped = Math.min(Math.max(0, ticks), (int) (maxControl() * 20 * 2));
         if (capped > 0) t.setFreezeTicks(Math.max(t.getFreezeTicks(), capped));

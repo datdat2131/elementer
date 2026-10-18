@@ -7,8 +7,14 @@ import org.bukkit.inventory.InventoryHolder;
 final class GuiHolder implements InventoryHolder {
     enum Page { MAIN, AWAKEN, SKILLS, STATS, AFFINITY, TOP }
 
-    static final int[] ELEMENT_SLOTS = {10, 11, 12, 14, 15, 16};
-    static final int[] SKILL_SLOTS = {11, 13, 15};
+    /** 8 nguyên tố: hai hàng bốn ô (trang 36 ô, nút quay lại ở ô 31). */
+    static final int[] ELEMENT_SLOTS = {10, 12, 14, 16, 19, 21, 23, 25};
+    static final int ELEMENT_BACK_SLOT = 31;
+
+    /** Vị trí các ô kỹ năng: 4 kỹ năng trải đều, 3 kỹ năng căn giữa. */
+    static int[] skillSlots(int count) {
+        return count >= 4 ? new int[]{10, 12, 14, 16} : new int[]{11, 13, 15};
+    }
 
     final Page page;
     Inventory inventory;

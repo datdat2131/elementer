@@ -61,6 +61,19 @@ public final class ElementStorage implements AutoCloseable {
         return CompletableFuture.runAsync(() -> run(() -> unclaimSync(id, rewardKey)), exec);
     }
 
+    /**
+     * Đánh dấu một vé nguyên tố đã dùng (toàn cục, không phụ thuộc người chơi).
+     * @return true nếu đây là lần dùng đầu tiên; false nếu vé này đã được dùng (chống nhân bản vé)
+     */
+    public CompletableFuture<Boolean> claimVoucher(String voucherId, UUID player) {
+        return CompletableFuture.supplyAsync(() -> call(() -> claimVoucherSync(voucherId, player)), exec);
+    }
+
+    /** Hoàn tác việc dùng vé (khi chưa trao được nguyên tố). */
+    public CompletableFuture<Void> unclaimVoucher(String voucherId) {
+        return CompletableFuture.runAsync(() -> run(() -> unclaimVoucherSync(voucherId)), exec);
+    }
+
     public CompletableFuture<List<TopEntry>> top(int limit) {
         return CompletableFuture.supplyAsync(() -> call(() -> topSync(limit)), exec);
     }
@@ -136,26 +149,49 @@ public final class ElementStorage implements AutoCloseable {
                     + "daily_day INTEGER NOT NULL DEFAULT 0,"
                     + "awakened_at INTEGER NOT NULL DEFAULT 0,"
                     + "skills TEXT NOT NULL DEFAULT '',"
+                    + "unlocked TEXT NOT NULL DEFAULT '',"
+                    + "aura_enabled INTEGER NOT NULL DEFAULT 1,"
+                    + "wings_enabled INTEGER NOT NULL DEFAULT 1,"
                     + "updated_at INTEGER NOT NULL DEFAULT 0)");
             st.executeUpdate("CREATE TABLE IF NOT EXISTS claimed_rewards ("
                     + "uuid TEXT NOT NULL,"
                     + "reward_key TEXT NOT NULL,"
                     + "claimed_at INTEGER NOT NULL,"
                     + "PRIMARY KEY (uuid, reward_key))");
+            st.executeUpdate("CREATE TABLE IF NOT EXISTS claimed_vouchers ("
+                    + "voucher_id TEXT PRIMARY KEY,"
+                    + "player_uuid TEXT NOT NULL,"
+                    + "claimed_at INTEGER NOT NULL)");
             st.executeUpdate("CREATE INDEX IF NOT EXISTS idx_players_rank ON players(level DESC, exp DESC)");
+        }
+        migrate();
+    }
+
+    /** Nâng cấp DB cũ (bản chưa có nhiều nguyên tố): thêm cột còn thiếu. */
+    private void migrate() throws SQLException {
+        java.util.Set<String> cols = new java.util.HashSet<>();
+        try (Statement st = connection().createStatement();
+             ResultSet rs = st.executeQuery("PRAGMA table_info(players)")) {
+            while (rs.next()) cols.add(rs.getString("name"));
+        }
+        try (Statement st = connection().createStatement()) {
+            if (!cols.contains("unlocked")) st.executeUpdate("ALTER TABLE players ADD COLUMN unlocked TEXT NOT NULL DEFAULT ''");
+            if (!cols.contains("aura_enabled")) st.executeUpdate("ALTER TABLE players ADD COLUMN aura_enabled INTEGER NOT NULL DEFAULT 1");
+            if (!cols.contains("wings_enabled")) st.executeUpdate("ALTER TABLE players ADD COLUMN wings_enabled INTEGER NOT NULL DEFAULT 1");
         }
     }
 
     private PlayerSnapshot loadSync(UUID id) throws SQLException {
         try (PreparedStatement ps = connection().prepareStatement(
-                "SELECT name, element, level, exp, skill_points, selected_slot, daily_exp, daily_day, awakened_at, skills "
+                "SELECT name, element, level, exp, skill_points, selected_slot, daily_exp, daily_day, awakened_at, skills, unlocked, aura_enabled, wings_enabled "
                         + "FROM players WHERE uuid = ?")) {
             ps.setString(1, id.toString());
             try (ResultSet rs = ps.executeQuery()) {
                 if (!rs.next()) return null;
                 return new PlayerSnapshot(id, rs.getString(1), rs.getString(2), rs.getInt(3), rs.getLong(4),
                         rs.getInt(5), rs.getInt(6), rs.getLong(7), rs.getLong(8), rs.getLong(9),
-                        SkillCodec.parse(rs.getString(10)));
+                        SkillCodec.parse(rs.getString(10)),
+                        SkillCodec.parseSet(rs.getString(11)), rs.getInt(12) != 0, rs.getInt(13) != 0);
             }
         }
     }
@@ -163,11 +199,12 @@ public final class ElementStorage implements AutoCloseable {
     private void saveSync(PlayerSnapshot s) throws SQLException {
         try (PreparedStatement ps = connection().prepareStatement(
                 "INSERT INTO players (uuid, name, element, level, exp, skill_points, selected_slot, daily_exp, daily_day, "
-                        + "awakened_at, skills, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?) "
+                        + "awakened_at, skills, updated_at, unlocked, aura_enabled, wings_enabled) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) "
                         + "ON CONFLICT(uuid) DO UPDATE SET name=excluded.name, element=excluded.element, level=excluded.level, "
                         + "exp=excluded.exp, skill_points=excluded.skill_points, selected_slot=excluded.selected_slot, "
                         + "daily_exp=excluded.daily_exp, daily_day=excluded.daily_day, awakened_at=excluded.awakened_at, "
-                        + "skills=excluded.skills, updated_at=excluded.updated_at")) {
+                        + "skills=excluded.skills, updated_at=excluded.updated_at, unlocked=excluded.unlocked, "
+                        + "aura_enabled=excluded.aura_enabled, wings_enabled=excluded.wings_enabled")) {
             ps.setString(1, s.uuid().toString());
             ps.setString(2, s.name());
             ps.setString(3, s.element());
@@ -180,6 +217,9 @@ public final class ElementStorage implements AutoCloseable {
             ps.setLong(10, s.awakenedAt());
             ps.setString(11, SkillCodec.serialize(s.skills()));
             ps.setLong(12, System.currentTimeMillis());
+            ps.setString(13, SkillCodec.serializeSet(s.unlocked()));
+            ps.setInt(14, s.auraEnabled() ? 1 : 0);
+            ps.setInt(15, s.wingsEnabled() ? 1 : 0);
             ps.executeUpdate();
         }
     }
@@ -199,6 +239,23 @@ public final class ElementStorage implements AutoCloseable {
                 "DELETE FROM claimed_rewards WHERE uuid = ? AND reward_key = ?")) {
             ps.setString(1, id.toString());
             ps.setString(2, key);
+            ps.executeUpdate();
+        }
+    }
+
+    private boolean claimVoucherSync(String id, UUID player) throws SQLException {
+        try (PreparedStatement ps = connection().prepareStatement(
+                "INSERT OR IGNORE INTO claimed_vouchers (voucher_id, player_uuid, claimed_at) VALUES (?,?,?)")) {
+            ps.setString(1, id);
+            ps.setString(2, player.toString());
+            ps.setLong(3, System.currentTimeMillis());
+            return ps.executeUpdate() == 1;
+        }
+    }
+
+    private void unclaimVoucherSync(String id) throws SQLException {
+        try (PreparedStatement ps = connection().prepareStatement("DELETE FROM claimed_vouchers WHERE voucher_id = ?")) {
+            ps.setString(1, id);
             ps.executeUpdate();
         }
     }
