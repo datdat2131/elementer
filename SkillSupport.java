@@ -72,7 +72,7 @@ public final class SkillSupport {
         return true;
     }
 
-    public void applyEffects(Player caster, LivingEntity t, SkillDef s, Location center, double ratio) {
+    public void applyEffects(LivingEntity caster, LivingEntity t, SkillDef s, Location center, double ratio) {
         double burn = s.fx("burn-seconds", 0);
         if (burn > 0) combat.ignite(t, burn);
         double slow = s.fx("slow-seconds", 0);
@@ -112,7 +112,7 @@ public final class SkillSupport {
      * Kéo mục tiêu về trước mặt người dùng. Chỉ dịch chuyển nếu điểm đến thông thoáng, cùng thế giới, và
      * (với người chơi) combat.teleport-pull-players = true. Đi qua sự kiện teleport chuẩn nên plugin khác có thể hủy.
      */
-    private void teleportPull(Player caster, LivingEntity t) {
+    private void teleportPull(LivingEntity caster, LivingEntity t) {
         if (t instanceof Player && !cfg.main().getBoolean("combat.teleport-pull-players", true)) return;
         Location c = caster.getLocation();
         double yaw = Math.toRadians(c.getYaw());

@@ -1,0 +1,278 @@
+# Boss nguyên tố + nguyên liệu (Tinh Thể) + đổi Vé Nguyên Tố.
+# Boss dùng kỹ năng nguyên tố để tấn công người chơi; chết thì rơi Tinh Thể của nguyên tố đó cho người chơi gây đủ sát thương.
+# Đổi đủ Tinh Thể (mục exchange) lấy 1 Vé Nguyên Tố của đúng nguyên tố -> chuột phải để sở hữu (tối đa 3 nguyên tố/người).
+settings:
+  tick-interval: 10             # nhịp AI (tick); 20 tick = 1 giây
+  cast-interval-seconds: 2.5    # khoảng cách tối thiểu giữa hai lần boss tung kỹ năng
+  max-damage: 30.0              # trần sát thương của MỘT đòn boss lên người chơi
+  damage-multiplier: 1.0        # nhân chung sát thương kỹ năng boss (chỉnh độ khó)
+  max-active: 5                 # số boss tối đa cùng lúc
+  bar-range: 48                 # tầm hiện thanh máu boss
+  min-damage-share: 0.05        # phải gây >= 5% tổng sát thương lên boss mới nhận thưởng
+  announce: true
+  spawn-when-player-within: 96  # điểm hồi sinh chỉ spawn khi có người chơi trong bán kính này
+
+# Vật phẩm dùng làm Tinh Thể (nhận diện bằng thẻ ẩn, không lẫn với vật phẩm thường)
+crystals:
+  FIRE: MAGMA_CREAM
+  ICE: PRISMARINE_CRYSTALS
+  LIGHTNING: AMETHYST_SHARD
+  EARTH: EMERALD
+  WIND: PHANTOM_MEMBRANE
+  LIGHT: GLOWSTONE_DUST
+
+# Số Tinh Thể cần để đổi 1 Vé Nguyên Tố. Nguyên tố KHÔNG có trong danh sách (Bóng Tối, Rồng) chỉ có bằng vé nạp.
+exchange:
+  FIRE: 48
+  ICE: 48
+  LIGHTNING: 48
+  EARTH: 48
+  WIND: 48
+  LIGHT: 48
+
+# Điểm hồi sinh tự động (tùy chọn). Boss chết thì hồi sinh sau respawn-minutes phút khi có người chơi lại gần.
+# Ví dụ:
+#  - { boss: fire_lord, world: world_nether, x: 100.5, y: 70, z: -200.5, respawn-minutes: 90 }
+spawns: []
+
+# Boss: dùng /elementeradmin boss spawn <id> để triệu hồi tại chỗ bạn đứng.
+# abilities: type = PROJECTILE | AOE_SELF | AOE_TARGET | HEAL_SELF (power = % máu tối đa hồi, 0-1)
+#   Đòn vùng (AOE_*) luôn có báo hiệu: vòng hạt hiện trước, sau delay-ticks mới gây sát thương.
+#   effects dùng cùng khóa như skills.yml (burn-seconds, slow-seconds, root-seconds, knockback, lift, pull, blind-seconds...)
+bosses:
+  fire_lord:
+    element: FIRE
+    name: "&c&lChúa Tể Hỏa Ngục"
+    entity: WITHER_SKELETON
+    health: 700
+    attack-damage: 10
+    armor: 8
+    scale: 1.8
+    speed: 0.27
+    detect-range: 28
+    enrage-below: 0.4           # còn dưới 40% máu thì nổi điên
+    enrage-multiplier: 1.3
+    rewards: { crystals-min: 4, crystals-max: 8, exp: 600 }
+    abilities:
+      fireball:
+        type: PROJECTILE
+        damage: 8
+        range: 28
+        cooldown: 5
+        particle: FLAME
+        sound: "entity.blaze.shoot"
+        effects: { burn-seconds: 4, knockback: 0.4 }
+      inferno_ring:
+        type: AOE_SELF
+        damage: 9
+        radius: 6
+        cooldown: 12
+        particle: FLAME
+        sound: "item.firecharge.use"
+        effects: { delay-ticks: 20, burn-seconds: 5, knockback: 1.0 }
+      meteor:
+        type: AOE_TARGET
+        damage: 12
+        radius: 4
+        range: 30
+        cooldown: 16
+        particle: FLAME
+        sound: "entity.generic.explode"
+        effects: { delay-ticks: 25, repeat: 2, interval-ticks: 14, burn-seconds: 5, knockback: 0.8 }
+  ice_queen:
+    element: ICE
+    name: "&b&lNữ Hoàng Băng Giá"
+    entity: STRAY
+    health: 650
+    attack-damage: 7
+    armor: 6
+    scale: 1.8
+    speed: 0.25
+    detect-range: 28
+    enrage-below: 0.4
+    enrage-multiplier: 1.3
+    rewards: { crystals-min: 4, crystals-max: 8, exp: 600 }
+    abilities:
+      ice_shard:
+        type: PROJECTILE
+        damage: 7
+        range: 28
+        cooldown: 5
+        particle: SNOWFLAKE
+        sound: "entity.snowball.throw"
+        effects: { slow-seconds: 3, slow-amplifier: 1, freeze-ticks: 100 }
+      frost_nova:
+        type: AOE_SELF
+        damage: 6
+        radius: 7
+        cooldown: 13
+        particle: SNOWFLAKE
+        sound: "block.glass.break"
+        effects: { delay-ticks: 20, slow-seconds: 4, slow-amplifier: 2, freeze-ticks: 140 }
+      ice_cage:
+        type: AOE_TARGET
+        damage: 8
+        radius: 3.5
+        range: 28
+        cooldown: 18
+        particle: SNOWFLAKE
+        sound: "block.glass.break"
+        effects: { delay-ticks: 20, root-seconds: 2, freeze-ticks: 120 }
+  thunder_god:
+    element: LIGHTNING
+    name: "&e&lThần Sấm"
+    entity: VINDICATOR
+    health: 600
+    attack-damage: 11
+    armor: 5
+    scale: 1.7
+    speed: 0.3
+    detect-range: 28
+    enrage-below: 0.4
+    enrage-multiplier: 1.3
+    rewards: { crystals-min: 4, crystals-max: 8, exp: 600 }
+    abilities:
+      bolt:
+        type: AOE_TARGET
+        damage: 13
+        radius: 2.5
+        range: 28
+        cooldown: 6
+        particle: ELECTRIC_SPARK
+        sound: "entity.lightning_bolt.thunder"
+        effects: { delay-ticks: 12, lightning-visual: 1, root-seconds: 0.6 }
+      storm:
+        type: AOE_TARGET
+        damage: 7
+        radius: 6
+        range: 28
+        cooldown: 18
+        particle: ELECTRIC_SPARK
+        sound: "entity.lightning_bolt.thunder"
+        effects: { delay-ticks: 20, repeat: 4, interval-ticks: 10, lightning-visual: 1 }
+      shock_nova:
+        type: AOE_SELF
+        damage: 8
+        radius: 5
+        cooldown: 12
+        particle: ELECTRIC_SPARK
+        sound: "entity.lightning_bolt.impact"
+        effects: { delay-ticks: 15, knockback: 1.2 }
+  stone_guardian:
+    element: EARTH
+    name: "&6&lCự Thạch Thủ Hộ"
+    entity: IRON_GOLEM
+    health: 900
+    attack-damage: 14
+    armor: 12
+    scale: 1.5
+    speed: 0.22
+    detect-range: 26
+    enrage-below: 0.35
+    enrage-multiplier: 1.3
+    rewards: { crystals-min: 4, crystals-max: 8, exp: 600 }
+    abilities:
+      quake:
+        type: AOE_SELF
+        damage: 10
+        radius: 7
+        cooldown: 12
+        particle: CRIT
+        sound: "entity.generic.explode"
+        effects: { delay-ticks: 18, lift: 0.8, slow-seconds: 2, slow-amplifier: 1 }
+      boulder:
+        type: PROJECTILE
+        damage: 9
+        range: 22
+        cooldown: 6
+        particle: CRIT
+        sound: "block.stone.break"
+        effects: { knockback: 1.0 }
+      stone_skin:
+        type: HEAL_SELF
+        power: 0.08
+        cooldown: 25
+        sound: "block.anvil.place"
+  wind_lord:
+    element: WIND
+    name: "&f&lPhong Vương"
+    entity: SKELETON
+    health: 600
+    attack-damage: 8
+    armor: 4
+    scale: 1.8
+    speed: 0.3
+    detect-range: 30
+    enrage-below: 0.4
+    enrage-multiplier: 1.3
+    rewards: { crystals-min: 4, crystals-max: 8, exp: 600 }
+    abilities:
+      gale:
+        type: PROJECTILE
+        damage: 7
+        range: 26
+        cooldown: 5
+        particle: CLOUD
+        sound: "entity.player.attack.sweep"
+        effects: { knockback: 1.2 }
+      cyclone:
+        type: AOE_SELF
+        damage: 6
+        radius: 8
+        cooldown: 15
+        particle: CLOUD
+        sound: "entity.breeze.wind_burst"
+        effects: { delay-ticks: 15, pull: 1.0, lift: 0.6, repeat: 3, interval-ticks: 10 }
+      wind_slash:
+        type: AOE_TARGET
+        damage: 9
+        radius: 3
+        range: 28
+        cooldown: 9
+        particle: CLOUD
+        sound: "entity.player.attack.sweep"
+        effects: { delay-ticks: 15, knockback: 1.4 }
+  light_paladin:
+    element: LIGHT
+    name: "&e&lThánh Kỵ Sĩ Quang Minh"
+    entity: PILLAGER
+    health: 650
+    attack-damage: 9
+    armor: 8
+    scale: 1.7
+    speed: 0.26
+    detect-range: 30
+    enrage-below: 0.4
+    enrage-multiplier: 1.3
+    rewards: { crystals-min: 4, crystals-max: 8, exp: 600 }
+    abilities:
+      holy_beam:
+        type: PROJECTILE
+        damage: 8
+        range: 30
+        cooldown: 5
+        particle: END_ROD
+        sound: "block.beacon.activate"
+        effects: { weakness-seconds: 4 }
+      judgment:
+        type: AOE_TARGET
+        damage: 12
+        radius: 4
+        range: 30
+        cooldown: 16
+        particle: END_ROD
+        sound: "block.beacon.power_select"
+        effects: { delay-ticks: 25, blind-seconds: 2 }
+      radiance:
+        type: AOE_SELF
+        damage: 7
+        radius: 6
+        cooldown: 14
+        particle: END_ROD
+        sound: "block.amethyst_block.chime"
+        effects: { delay-ticks: 18, blind-seconds: 2, knockback: 0.8 }
+      mend:
+        type: HEAL_SELF
+        power: 0.1
+        cooldown: 30
+        sound: "block.beacon.ambient"

@@ -38,6 +38,7 @@
      <include>elements.yml</include>
      <include>skills.yml</include>
      <include>messages.yml</include>
+     <include>bosses.yml</include>
     </includes>
    </resource>
   </resources>
@@ -53,6 +54,7 @@
         <file>${project.basedir}/elements.yml</file>
         <file>${project.basedir}/skills.yml</file>
         <file>${project.basedir}/messages.yml</file>
+        <file>${project.basedir}/bosses.yml</file>
         <file>${project.basedir}/ElementerCore.java</file>
         <file>${project.basedir}/SkillService.java</file>
        </files>

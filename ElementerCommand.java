@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Locale;
 
 public final class ElementerCommand implements CommandExecutor, TabCompleter {
-    private static final List<String> SUBS = List.of("help", "info", "skills", "stats", "top", "cast", "select", "awaken", "unlock", "switch", "aura", "wings");
+    private static final List<String> SUBS = List.of("help", "info", "skills", "stats", "top", "cast", "select", "awaken", "unlock", "switch", "aura", "wings", "exchange");
 
     private final ElementConfig cfg;
     private final ElementService elements;
@@ -21,15 +21,19 @@ public final class ElementerCommand implements CommandExecutor, TabCompleter {
     private final ElementGUI gui;
     private final OwnershipActions actions;
     private final AuraService aura;
+    private final CrystalService crystals;
+    private final BossConfig bossCfg;
 
     public ElementerCommand(ElementConfig cfg, ElementService elements, SkillService skills, ElementGUI gui,
-                            OwnershipActions actions, AuraService aura) {
+                            OwnershipActions actions, AuraService aura, CrystalService crystals, BossConfig bossCfg) {
         this.cfg = cfg;
         this.elements = elements;
         this.skills = skills;
         this.gui = gui;
         this.actions = actions;
         this.aura = aura;
+        this.crystals = crystals;
+        this.bossCfg = bossCfg;
     }
 
     private boolean allowed(CommandSender s, String perm) {
@@ -108,6 +112,16 @@ public final class ElementerCommand implements CommandExecutor, TabCompleter {
                 if (e == null) m.send(p, "awaken.invalid");
                 else actions.switchTo(p, e);
             }
+            case "exchange" -> {
+                if (!allowed(p, "elementer.command.exchange")) return true;
+                if (args.length < 2) {
+                    sendExchangeList(p);
+                    return true;
+                }
+                Element e = Element.parse(args[1]);
+                if (e == null) m.send(p, "awaken.invalid");
+                else crystals.exchangeAndNotify(p, e);
+            }
             case "wings" -> {
                 if (!allowed(p, "elementer.command.wings")) return true;
                 aura.setWings(p, onOff(args));
@@ -128,6 +142,18 @@ public final class ElementerCommand implements CommandExecutor, TabCompleter {
         if (a.equals("on") || a.equals("bat")) return true;
         if (a.equals("off") || a.equals("tat")) return false;
         return null;
+    }
+
+    private void sendExchangeList(Player p) {
+        Messages m = cfg.messages();
+        p.sendMessage(Text.c(m.raw("exchange.header")));
+        for (Element e : Element.values()) {
+            Integer cost = bossCfg.exchangeCost(e);
+            ElementDef def = cfg.element(e);
+            if (cost == null || def == null) continue;
+            p.sendMessage(Text.c(Messages.format(m.raw("exchange.line"), "element", def.colored(), "key", e.alias(),
+                    "have", crystals.count(p, e), "cost", cost)));
+        }
     }
 
     /** Dữ liệu người chơi đã thức tỉnh, hoặc null (đã báo lỗi cho người chơi). */
@@ -205,6 +231,7 @@ public final class ElementerCommand implements CommandExecutor, TabCompleter {
                 for (Element e : Element.values()) out.add(e.alias());
             }
             if (sub.equals("aura") || sub.equals("wings")) out.addAll(List.of("on", "off"));
+            if (sub.equals("exchange")) for (Element e : Element.values()) if (bossCfg.exchangeCost(e) != null) out.add(e.alias());
         }
         return out;
     }

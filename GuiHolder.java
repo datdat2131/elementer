@@ -5,7 +5,7 @@ import org.bukkit.inventory.InventoryHolder;
 
 /** Đánh dấu inventory thuộc GUI của plugin và cho biết đang ở trang nào. */
 final class GuiHolder implements InventoryHolder {
-    enum Page { MAIN, AWAKEN, SKILLS, STATS, AFFINITY, TOP }
+    enum Page { MAIN, AWAKEN, SKILLS, STATS, AFFINITY, TOP, EXCHANGE }
 
     /** 8 nguyên tố: hai hàng bốn ô (trang 36 ô, nút quay lại ở ô 31). */
     static final int[] ELEMENT_SLOTS = {10, 12, 14, 16, 19, 21, 23, 25};

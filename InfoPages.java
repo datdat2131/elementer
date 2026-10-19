@@ -15,12 +15,17 @@ final class InfoPages {
     private final ElementConfig cfg;
     private final ElementService elements;
     private final GuiItems ui;
+    private final CrystalService crystals;
+    private final BossConfig bossCfg;
 
-    InfoPages(ElementerCore plugin, ElementConfig cfg, ElementService elements, GuiItems ui) {
+    InfoPages(ElementerCore plugin, ElementConfig cfg, ElementService elements, GuiItems ui,
+              CrystalService crystals, BossConfig bossCfg) {
         this.plugin = plugin;
         this.cfg = cfg;
         this.elements = elements;
         this.ui = ui;
+        this.crystals = crystals;
+        this.bossCfg = bossCfg;
     }
 
     void main(Player p, PlayerData d) {
@@ -34,6 +39,7 @@ final class InfoPages {
         inv.setItem(14, ui.item(Material.COMPASS, ui.raw("gui.affinity-button"), null, false));
         inv.setItem(16, ui.item(Material.GOLD_INGOT, ui.raw("gui.top-button"), null, false));
         inv.setItem(20, ui.item(Material.ENDER_EYE, ui.raw("gui.elements-button"), null, false));
+        inv.setItem(18, ui.item(Material.AMETHYST_SHARD, ui.raw("gui.exchange-button"), null, false));
         String state = ui.raw(d.isAuraEnabled() ? "gui.aura-on" : "gui.aura-off");
         List<String> auraLore = new ArrayList<>();
         if (def.aura() != null) auraLore.add(Messages.format(ui.raw("gui.lore.aura-info"), "level", def.aura().unlockLevel()));
@@ -123,6 +129,30 @@ final class InfoPages {
             if (!weak.isEmpty()) lore.add(Messages.format(ui.raw("gui.lore.affinity-weak"),
                     "list", String.join("&7, ", weak), "mult", cfg.affinity().weak()));
             inv.setItem(GuiHolder.ELEMENT_SLOTS[i], ui.item(def.icon(), def.colored(), lore, false));
+        }
+        inv.setItem(GuiHolder.ELEMENT_BACK_SLOT, ui.item(Material.ARROW, ui.raw("gui.back"), null, false));
+        p.openInventory(inv);
+    }
+
+    /** Trang đổi Tinh Thể lấy Vé Nguyên Tố. */
+    void exchange(Player p, PlayerData d) {
+        Inventory inv = ui.create(GuiHolder.Page.EXCHANGE, 36, "gui.title-exchange");
+        Element[] all = Element.values();
+        int max = elements.ownership().maxOwned();
+        for (int i = 0; i < all.length; i++) {
+            ElementDef def = cfg.element(all[i]);
+            Integer cost = bossCfg.exchangeCost(all[i]);
+            if (def == null || cost == null) continue;
+            int have = crystals.count(p, all[i]);
+            boolean owned = d.hasUnlocked(all[i]);
+            List<String> lore = new ArrayList<>(def.description());
+            lore.add(" ");
+            lore.add(Messages.format(ui.raw("gui.lore.crystal-count"), "have", have, "cost", cost));
+            if (owned) lore.add(ui.raw("gui.lore.element-owned"));
+            else if (d.unlockedCount() >= max) lore.add(Messages.format(ui.raw("gui.lore.element-max"), "max", max));
+            else lore.add(ui.raw("gui.lore.hint-exchange"));
+            inv.setItem(GuiHolder.ELEMENT_SLOTS[i], ui.item(bossCfg.crystalMaterial(all[i]), def.colored(), lore,
+                    !owned && have >= cost));
         }
         inv.setItem(GuiHolder.ELEMENT_BACK_SLOT, ui.item(Material.ARROW, ui.raw("gui.back"), null, false));
         p.openInventory(inv);

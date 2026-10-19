@@ -140,7 +140,8 @@ class BundledConfigTest {
                 "level-up", "cast.cooldown", "cast.no-target", "upgrade.success", "top.line", "admin.reloaded",
                 "gui.title-main", "gui.lore.skill-damage", "gui.lore.hint-upgrade", "info", "help", "voucher.item-name",
                 "voucher.redeemed", "voucher.invalid", "voucher.max", "unlock.max-reached", "unlock.voucher-only",
-                "wings.on", "wings.off", "admin.given-voucher", "gui.lore.element-voucher"}) {
+                "wings.on", "wings.off", "admin.given-voucher", "gui.lore.element-voucher", "boss.reward", "boss.spawned",
+                "crystal.item-name", "exchange.success", "exchange.not-enough", "admin.boss-header", "gui.title-exchange"}) {
             assertTrue(m.contains(k), "thiếu khóa " + k);
         }
     }
@@ -156,5 +157,54 @@ class BundledConfigTest {
             assertTrue(root.getDouble(id + ".effects.lifesteal", 0) <= 0.5, id);
         }
         assertTrue(pull && steal);
+    }
+
+    @Test
+    void bossesAreWellFormedAndBalanced() throws Exception {
+        YamlConfiguration y = yaml("bosses.yml");
+        double maxDamage = y.getDouble("settings.max-damage");
+        double maxControl = yaml("config.yml").getDouble("combat.max-control-seconds");
+        ConfigurationSection bosses = y.getConfigurationSection("bosses");
+        assertEquals(6, bosses.getKeys(false).size());
+        Set<Element> covered = new HashSet<>();
+        for (String id : bosses.getKeys(false)) {
+            ConfigurationSection b = bosses.getConfigurationSection(id);
+            Element el = Element.parse(b.getString("element"));
+            assertNotNull(el, id);
+            covered.add(el);
+            assertNotEquals(Element.DARK, el, "boss không được cho nguyên tố nạp");
+            assertNotEquals(Element.DRAGON, el, "boss không được cho nguyên tố nạp");
+            assertTrue(b.getDouble("health") >= 20 && b.getDouble("scale") <= 4, id);
+            assertTrue(b.getInt("rewards.crystals-min") <= b.getInt("rewards.crystals-max"), id);
+            ConfigurationSection ab = b.getConfigurationSection("abilities");
+            assertTrue(ab.getKeys(false).size() >= 3, id + " cần ≥ 3 kỹ năng");
+            for (String k : ab.getKeys(false)) {
+                ConfigurationSection a = ab.getConfigurationSection(k);
+                assertTrue(Set.of("PROJECTILE", "AOE_SELF", "AOE_TARGET", "HEAL_SELF").contains(a.getString("type")), id + "." + k);
+                assertTrue(a.getDouble("damage") <= maxDamage, id + "." + k + " vượt trần");
+                assertTrue(a.getDouble("cooldown") >= 1, id + "." + k);
+                if (a.getString("type").startsWith("AOE")) {
+                    assertTrue(a.getDouble("effects.delay-ticks") >= 10, id + "." + k + " đòn vùng phải có báo hiệu");
+                }
+                for (String c : new String[]{"root-seconds", "slow-seconds", "blind-seconds"}) {
+                    assertTrue(a.getDouble("effects." + c) <= maxControl, id + "." + k + "." + c);
+                }
+            }
+        }
+        assertEquals(Set.of(Element.FIRE, Element.ICE, Element.LIGHTNING, Element.EARTH, Element.WIND, Element.LIGHT), covered);
+    }
+
+    @Test
+    void exchangeCoversBaseElementsOnlyAndCrystalsAreValid() throws Exception {
+        YamlConfiguration y = yaml("bosses.yml");
+        ConfigurationSection ex = y.getConfigurationSection("exchange");
+        assertNull(ex.get("DARK"));
+        assertNull(ex.get("DRAGON"));
+        for (String k : ex.getKeys(false)) {
+            assertNotNull(Element.parse(k), k);
+            assertTrue(ex.getInt(k) >= 1);
+            assertNotNull(y.getString("crystals." + k), "thiếu vật phẩm tinh thể cho " + k);
+        }
+        assertEquals(6, ex.getKeys(false).size());
     }
 }

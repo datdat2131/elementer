@@ -23,11 +23,11 @@ class PluginYmlTest {
     void everyCommandPermissionIsDeclared() throws Exception {
         ConfigurationSection perms = plugin().getConfigurationSection("permissions");
         assertNotNull(perms);
-        for (String p : List.of("main", "info", "skills", "stats", "top", "cast", "select", "awaken", "unlock", "switch", "aura", "wings")) {
+        for (String p : List.of("main", "info", "skills", "stats", "top", "cast", "select", "awaken", "unlock", "switch", "aura", "wings", "exchange")) {
             assertNotNull(perms.getConfigurationSection("elementer.command." + p), p);
             assertEquals("true", perms.getString("elementer.command." + p + ".default"));
         }
-        for (String p : List.of("reload", "give", "set", "reset")) {
+        for (String p : List.of("reload", "give", "set", "reset", "boss")) {
             assertNotNull(perms.getConfigurationSection("elementer.admin." + p), p);
             assertEquals("op", perms.getString("elementer.admin." + p + ".default"));
         }
@@ -43,7 +43,7 @@ class PluginYmlTest {
         ConfigurationSection children = plugin().getConfigurationSection("permissions.elementer.admin.*.children");
         assertNotNull(children);
         assertTrue(children.getKeys(true).containsAll(List.of("elementer.admin.reload", "elementer.admin.give",
-                "elementer.admin.set", "elementer.admin.reset")));
+                "elementer.admin.set", "elementer.admin.reset", "elementer.admin.boss")));
     }
 
     @Test

@@ -22,17 +22,19 @@ public final class ElementGUI implements Listener {
     private final SkillPage skillPage;
     private final OwnershipActions actions;
     private final AuraService aura;
+    private final CrystalService crystals;
     private final Map<UUID, Pending> pending = new HashMap<>();
 
     public ElementGUI(ElementerCore plugin, ElementConfig cfg, ElementService elements, SkillService skills,
-                      OwnershipActions actions, AuraService aura) {
+                      OwnershipActions actions, AuraService aura, CrystalService crystals, BossConfig bossCfg) {
         this.cfg = cfg;
         this.elements = elements;
         this.skills = skills;
         this.actions = actions;
         this.aura = aura;
+        this.crystals = crystals;
         GuiItems ui = new GuiItems(cfg);
-        this.info = new InfoPages(plugin, cfg, elements, ui);
+        this.info = new InfoPages(plugin, cfg, elements, ui, crystals, bossCfg);
         this.skillPage = new SkillPage(cfg, skills, ui);
     }
 
@@ -82,6 +84,7 @@ public final class ElementGUI implements Listener {
             case TOP -> {
                 if (slot == 31) openMain(p);
             }
+            case EXCHANGE -> clickExchange(p, slot);
         }
     }
 
@@ -96,6 +99,7 @@ public final class ElementGUI implements Listener {
             case 12 -> openSkills(p);
             case 14 -> info.affinity(p);
             case 16 -> info.top(p);
+            case 18 -> openExchange(p);
             case 20 -> openElements(p);
             case 26 -> {
                 aura.setWings(p, null);
@@ -114,6 +118,27 @@ public final class ElementGUI implements Listener {
         PlayerData d = elements.get(p);
         if (d == null) cfg.messages().send(p, "data-loading");
         else info.awaken(p, d);
+    }
+
+    private void openExchange(Player p) {
+        PlayerData d = elements.get(p);
+        if (d == null) cfg.messages().send(p, "data-loading");
+        else info.exchange(p, d);
+    }
+
+    private void clickExchange(Player p, int slot) {
+        if (slot == GuiHolder.ELEMENT_BACK_SLOT) {
+            openMain(p);
+            return;
+        }
+        Element[] all = Element.values();
+        for (int i = 0; i < GuiHolder.ELEMENT_SLOTS.length; i++) {
+            if (GuiHolder.ELEMENT_SLOTS[i] == slot && cfg.element(all[i]) != null) {
+                crystals.exchangeAndNotify(p, all[i]);
+                openExchange(p);
+                return;
+            }
+        }
     }
 
     private void clickAwaken(Player p, int slot) {

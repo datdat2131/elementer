@@ -18,6 +18,7 @@ help:
   - "&e/elementer switch <nguyên tố> &7- Chuyển nguyên tố đang dùng"
   - "&e/elementer aura [on|off] &7- Bật/tắt hào quang"
   - "&e/elementer wings [on|off] &7- Bật/tắt cánh (nguyên tố có cánh)"
+  - "&e/elementer exchange [nguyên tố] &7- Đổi Tinh Thể lấy Vé Nguyên Tố"
 awaken:
   confirm: "&eBấm lại lần nữa để xác nhận thức tỉnh nguyên tố {element}&e."
   success: "&aBạn đã thức tỉnh nguyên tố {element}&a!"
@@ -37,6 +38,24 @@ switch:
   not-owned: "&cBạn chưa mở khóa nguyên tố này."
   same: "&7Bạn đang dùng nguyên tố này rồi."
   cooldown: "&cChờ {seconds}s nữa mới chuyển nguyên tố được."
+boss:
+  spawned: "&c&l⚠ &r{boss} &cđã xuất hiện tại &e{x} {y} {z}&c!"
+  killed: "&a{boss} &ađã bị hạ gục! Người gây nhiều sát thương nhất: &e{player}"
+  reward: "&aPhần thưởng từ {boss}&a: &e{crystals} Tinh Thể {element}&a, &e{exp} EXP&a."
+  enraged: "&c{boss} &cnổi điên!"
+crystal:
+  item-name: "&b✧ Tinh Thể {element}"
+  item-lore:
+    - "&7Nguyên liệu rơi từ boss {element}&7."
+    - "&7Dùng &e/elementer exchange&7 để đổi lấy Vé Nguyên Tố."
+exchange:
+  header: "&6&l==== Đổi Tinh Thể lấy Vé Nguyên Tố ===="
+  line: "&7{element} &7- có &e{have}&7/&e{cost} &7Tinh Thể  &8(/elementer exchange {key})"
+  success: "&aĐã đổi {cost} Tinh Thể {element}&a lấy 1 Vé Nguyên Tố. Chuột phải vé để sở hữu."
+  not-enough: "&cCần {cost} Tinh Thể {element}&c (bạn có {have})."
+  not-exchangeable: "&cNguyên tố {element} &ckhông đổi được bằng Tinh Thể."
+  owned: "&cBạn đã sở hữu nguyên tố này."
+  max: "&cBạn đã sở hữu tối đa {max} nguyên tố, không thể đổi thêm vé."
 voucher:
   item-name: "&d✦ Vé Nguyên Tố {element}"
   item-lore:
@@ -105,6 +124,11 @@ admin:
   given: "&aĐã trao {amount} {what} cho {player}."
   set-done: "&aĐã đặt {what} của {player} = {value}."
   reset-done: "&aĐã đặt lại dữ liệu của {player}."
+  given-crystal: "&aĐã trao {amount} Tinh Thể {element} &acho {player}."
+  boss-header: "&6Boss khả dụng: &e{ids}"
+  boss-unknown: "&cBoss không tồn tại. Có: {ids}"
+  boss-limit: "&cĐã đạt số boss tối đa cùng lúc."
+  boss-killed: "&aĐã gỡ {count} boss."
   given-voucher: "&aĐã trao {amount} Vé Nguyên Tố {element} &acho {player}."
 gui:
   title-main: "&6Nguyên Tố"
@@ -121,6 +145,8 @@ gui:
   top-button: "&6Bảng xếp hạng"
   points-button: "&eĐiểm kỹ năng: {points}"
   elements-button: "&6Nguyên tố"
+  exchange-button: "&bĐổi Tinh Thể lấy Vé"
+  title-exchange: "&6Đổi Tinh Thể"
   aura-button: "&dHào quang: {state}"
   wings-button: "&bCánh: {state}"
   aura-on: "&aBật"
@@ -152,5 +178,7 @@ gui:
     element-requirement: "&7Yêu cầu: cấp &e{level}&7, &e{points}&7 điểm kỹ năng"
     hint-switch: "&eBấm để chuyển sang nguyên tố này"
     hint-unlock: "&eBấm để mở khóa"
+    crystal-count: "&7Tinh Thể: &e{have}&7/&e{cost}"
+    hint-exchange: "&eBấm để đổi lấy 1 Vé Nguyên Tố"
     hint-aura: "&7Bấm để bật/tắt hào quang"
     aura-info: "&7Hào quang: mở khóa ở cấp &e{level}"

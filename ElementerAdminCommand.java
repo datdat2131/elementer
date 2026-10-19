@@ -13,19 +13,26 @@ import java.util.Locale;
 
 /** /elementeradmin reload | give <player> <exp|points> <n> | set <player> <element|level|exp|points> <v> | reset <player> */
 public final class ElementerAdminCommand implements CommandExecutor, TabCompleter {
-    private static final List<String> SUBS = List.of("reload", "give", "set", "reset");
+    private static final List<String> SUBS = List.of("reload", "give", "set", "reset", "boss");
     private static final long MAX_AMOUNT = 1_000_000L;
 
     private final ElementerCore plugin;
     private final ElementConfig cfg;
     private final ElementService elements;
     private final VoucherService vouchers;
+    private final CrystalService crystals;
+    private final BossService bosses;
+    private final BossConfig bossCfg;
 
-    public ElementerAdminCommand(ElementerCore plugin, ElementConfig cfg, ElementService elements, VoucherService vouchers) {
+    public ElementerAdminCommand(ElementerCore plugin, ElementConfig cfg, ElementService elements, VoucherService vouchers,
+                                 CrystalService crystals, BossService bosses, BossConfig bossCfg) {
         this.plugin = plugin;
         this.cfg = cfg;
         this.elements = elements;
         this.vouchers = vouchers;
+        this.crystals = crystals;
+        this.bosses = bosses;
+        this.bossCfg = bossCfg;
     }
 
     @Override
@@ -45,12 +52,12 @@ public final class ElementerAdminCommand implements CommandExecutor, TabComplete
             case "give" -> {
                 if (!perm(sender, "elementer.admin.give")) return true;
                 if (args.length < 4) {
-                    m.send(sender, "admin.usage", "usage", "/" + label + " give <người chơi> <exp|points|voucher> <số|nguyên tố> [số lượng]");
+                    m.send(sender, "admin.usage", "usage", "/" + label + " give <người chơi> <exp|points|voucher|crystal> <số|nguyên tố> [số lượng]");
                     return true;
                 }
                 Player t = target(sender, args[1]);
-                if (t != null && args[2].equalsIgnoreCase("voucher")) {
-                    giveVoucher(sender, t, args, label);
+                if (t != null && (args[2].equalsIgnoreCase("voucher") || args[2].equalsIgnoreCase("crystal"))) {
+                    giveItem(sender, t, args);
                     return true;
                 }
                 Long n = number(sender, args[3]);
@@ -117,6 +124,10 @@ public final class ElementerAdminCommand implements CommandExecutor, TabComplete
                 }
                 m.send(sender, "admin.set-done", "what", what, "player", t.getName(), "value", n);
             }
+            case "boss" -> {
+                if (!perm(sender, "elementer.admin.boss")) return true;
+                bossCommand(sender, args, label);
+            }
             case "reset" -> {
                 if (!perm(sender, "elementer.admin.reset")) return true;
                 if (args.length < 2) {
@@ -137,10 +148,14 @@ public final class ElementerAdminCommand implements CommandExecutor, TabComplete
         return true;
     }
 
-    /** /elementeradmin give <người chơi> voucher <nguyên tố> [số lượng] - dùng được từ console (plugin nạp thẻ). */
-    private void giveVoucher(CommandSender sender, Player t, String[] args, String label) {
+    /**
+     * /elementeradmin give <người chơi> voucher|crystal <nguyên tố> [số lượng] - dùng được từ console (plugin nạp thẻ).
+     * Vé: 1-10; tinh thể: 1-64.
+     */
+    private void giveItem(CommandSender sender, Player t, String[] args) {
         Messages m = cfg.messages();
-        Element e = Element.parse(args[3]);
+        boolean voucher = args[2].equalsIgnoreCase("voucher");
+        Element e = args.length < 4 ? null : Element.parse(args[3]);
         if (e == null || cfg.element(e) == null) {
             m.send(sender, "awaken.invalid");
             return;
@@ -154,14 +169,45 @@ public final class ElementerAdminCommand implements CommandExecutor, TabComplete
                 return;
             }
         }
-        if (amount < 1 || amount > 10) {
+        if (amount < 1 || amount > (voucher ? 10 : 64)) {
             m.send(sender, "admin.invalid-number");
             return;
         }
-        int given = vouchers.give(t, e, amount);
         ElementDef def = cfg.element(e);
-        m.send(sender, "admin.given-voucher", "amount", given, "element", def == null ? e.name() : def.colored(),
-                "player", t.getName());
+        String colored = def == null ? e.name() : def.colored();
+        if (voucher) {
+            int given = vouchers.give(t, e, amount);
+            m.send(sender, "admin.given-voucher", "amount", given, "element", colored, "player", t.getName());
+        } else {
+            crystals.give(t, e, amount);
+            m.send(sender, "admin.given-crystal", "amount", amount, "element", colored, "player", t.getName());
+        }
+    }
+
+    /** /elementeradmin boss list | spawn <id> | kill <id|all> */
+    private void bossCommand(CommandSender sender, String[] args, String label) {
+        Messages m = cfg.messages();
+        String sub = args.length < 2 ? "list" : args[1].toLowerCase(Locale.ROOT);
+        switch (sub) {
+            case "list" -> {
+                m.send(sender, "admin.boss-header", "ids", String.join(", ", bossCfg.bosses().keySet()));
+                for (String line : bosses.describe()) sender.sendMessage(Text.c("&7- &f" + line));
+            }
+            case "spawn" -> {
+                if (!(sender instanceof Player p)) {
+                    m.send(sender, "player-only");
+                    return;
+                }
+                BossDef def = args.length < 3 ? null : bossCfg.boss(args[2]);
+                if (def == null) {
+                    m.send(sender, "admin.boss-unknown", "ids", String.join(", ", bossCfg.bosses().keySet()));
+                    return;
+                }
+                if (bosses.spawn(def, p.getLocation(), -1) == null) m.send(sender, "admin.boss-limit");
+            }
+            case "kill" -> m.send(sender, "admin.boss-killed", "count", bosses.kill(args.length < 3 ? "all" : args[2]));
+            default -> m.send(sender, "admin.usage", "usage", "/" + label + " boss <list|spawn <id>|kill <id|all>>");
+        }
     }
 
     private boolean perm(CommandSender s, String node) {
@@ -191,14 +237,19 @@ public final class ElementerAdminCommand implements CommandExecutor, TabComplete
         String last = args[args.length - 1].toLowerCase(Locale.ROOT);
         if (args.length == 1) {
             for (String s : SUBS) if (s.startsWith(last)) out.add(s);
-        } else if (args.length == 2 && !args[0].equalsIgnoreCase("reload")) {
+        } else if (args.length == 2 && !args[0].equalsIgnoreCase("reload") && !args[0].equalsIgnoreCase("boss")) {
             for (Player p : Bukkit.getOnlinePlayers()) if (p.getName().toLowerCase(Locale.ROOT).startsWith(last)) out.add(p.getName());
         } else if (args.length == 3 && args[0].equalsIgnoreCase("give")) {
-            out.addAll(List.of("exp", "points", "voucher"));
+            out.addAll(List.of("exp", "points", "voucher", "crystal"));
         } else if (args.length == 3 && args[0].equalsIgnoreCase("set")) {
             out.addAll(List.of("element", "level", "exp", "points"));
-        } else if (args.length == 4 && args[0].equalsIgnoreCase("give") && args[2].equalsIgnoreCase("voucher")) {
+        } else if (args.length == 4 && args[0].equalsIgnoreCase("give")
+                && (args[2].equalsIgnoreCase("voucher") || args[2].equalsIgnoreCase("crystal"))) {
             for (Element e : Element.values()) out.add(e.alias());
+        } else if (args.length == 2 && args[0].equalsIgnoreCase("boss")) {
+            out.addAll(List.of("list", "spawn", "kill"));
+        } else if (args.length == 3 && args[0].equalsIgnoreCase("boss") && args[1].equalsIgnoreCase("spawn")) {
+            out.addAll(bossCfg.bosses().keySet());
         } else if (args.length == 4 && args[0].equalsIgnoreCase("set") && args[2].equalsIgnoreCase("element")) {
             for (Element e : Element.values()) out.add(e.alias());
         }

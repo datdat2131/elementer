@@ -18,6 +18,9 @@ public final class ElementerCore extends JavaPlugin {
     private ElementGUI gui;
     private AuraService auraService;
     private VoucherService voucherService;
+    private BossConfig bossConfig;
+    private CrystalService crystalService;
+    private BossService bossService;
 
     @Override
     public void onEnable() {
@@ -49,29 +52,35 @@ public final class ElementerCore extends JavaPlugin {
         elementService.bind(skillService);
         auraService = new AuraService(this, elementConfig, elementService);
         OwnershipActions actions = new OwnershipActions(elementConfig, elementService);
-        gui = new ElementGUI(this, elementConfig, elementService, skillService, actions, auraService);
+        voucherService = new VoucherService(this, elementConfig, elementService, storage);
+        bossConfig = new BossConfig(this, elementConfig);
+        bossConfig.load();
+        crystalService = new CrystalService(this, elementConfig, bossConfig, elementService, voucherService);
+        bossService = new BossService(this, elementConfig, bossConfig, elementService, combatService, crystalService);
+        gui = new ElementGUI(this, elementConfig, elementService, skillService, actions, auraService, crystalService, bossConfig);
 
         Bukkit.getPluginManager().registerEvents(new PlayerListener(this, elementConfig, elementService, skillService, combatService), this);
         Bukkit.getPluginManager().registerEvents(new DamageListener(elementConfig, elementService, combatService), this);
         Bukkit.getPluginManager().registerEvents(new ProgressListener(this, elementConfig, elementService), this);
         Bukkit.getPluginManager().registerEvents(gui, this);
-        voucherService = new VoucherService(this, elementConfig, elementService, storage);
         Bukkit.getPluginManager().registerEvents(new VoucherListener(voucherService, elementConfig), this);
+        Bukkit.getPluginManager().registerEvents(new BossListener(bossService), this);
 
         PluginCommand main = getCommand("elementer");
         PluginCommand admin = getCommand("elementeradmin");
         if (main != null) {
-            ElementerCommand c = new ElementerCommand(elementConfig, elementService, skillService, gui, actions, auraService);
+            ElementerCommand c = new ElementerCommand(elementConfig, elementService, skillService, gui, actions, auraService, crystalService, bossConfig);
             main.setExecutor(c);
             main.setTabCompleter(c);
         }
         if (admin != null) {
-            ElementerAdminCommand c = new ElementerAdminCommand(this, elementConfig, elementService, voucherService);
+            ElementerAdminCommand c = new ElementerAdminCommand(this, elementConfig, elementService, voucherService, crystalService, bossService, bossConfig);
             admin.setExecutor(c);
             admin.setTabCompleter(c);
         }
 
         auraService.start();
+        bossService.start();
         elementService.start();
         // Hỗ trợ /reload hoặc plugin được bật khi đã có người chơi online
         for (Player p : Bukkit.getOnlinePlayers()) elementService.load(p);
@@ -80,6 +89,10 @@ public final class ElementerCore extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (bossService != null) {
+            bossService.stop();
+            bossService.removeAll();
+        }
         if (auraService != null) auraService.stop();
         if (elementService != null) elementService.shutdown();
         if (storage != null) storage.close();
@@ -90,5 +103,7 @@ public final class ElementerCore extends JavaPlugin {
         elementConfig.load();
         elementService.reapplyAll();
         auraService.start(); // áp dụng lại aura.interval-ticks
+        bossConfig.load();
+        bossService.start(); // áp dụng lại bosses.yml (boss đang sống vẫn giữ nguyên)
     }
 }
