@@ -14,6 +14,7 @@ import org.bukkit.util.Vector;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 /** Kỹ năng nguyên tố của boss: chọn kỹ năng phù hợp khoảng cách/hồi chiêu và thực thi (có báo hiệu trước các đòn vùng). */
 final class BossAbilities {
@@ -24,13 +25,16 @@ final class BossAbilities {
     private final BossConfig bossCfg;
     private final ElementService elements;
     private final SkillSupport sup;
+    private final BiConsumer<ActiveBoss, String> speech;
 
-    BossAbilities(ElementerCore plugin, ElementConfig cfg, BossConfig bossCfg, ElementService elements, CombatService combat) {
+    BossAbilities(ElementerCore plugin, ElementConfig cfg, BossConfig bossCfg, ElementService elements, CombatService combat,
+                   BiConsumer<ActiveBoss, String> speech) {
         this.plugin = plugin;
         this.cfg = cfg;
         this.bossCfg = bossCfg;
         this.elements = elements;
         this.sup = new SkillSupport(plugin, cfg, combat);
+        this.speech = speech;
     }
 
     static boolean validPlayer(Player p, World w) {
@@ -50,6 +54,7 @@ final class BossAbilities {
         for (SkillDef s : order) {
             if (b.readyAt.getOrDefault(s.id(), 0L) > now || !usable(b, s, dist)) continue;
             cast(b, s, target);
+            speech.accept(b, "cast");
             double speedup = b.enraged ? 0.7 : 1.0;
             b.readyAt.put(s.id(), now + (long) (s.cooldown() * 1000 * speedup));
             b.nextCastAt = now + (long) (bossCfg.settings().getDouble("settings.cast-interval-seconds", 2.5) * 1000);

@@ -39,6 +39,13 @@ final class GuiItems {
         return inv;
     }
 
+    /** Như {@link #create} nhưng gắn nguyên tố đang xem vào holder (trang thông tin boss). */
+    Inventory create(GuiHolder.Page page, int size, String titleKey, Element element) {
+        Inventory inv = create(page, size, titleKey);
+        ((GuiHolder) inv.getHolder()).element = element;
+        return inv;
+    }
+
     String raw(String key) {
         return cfg.messages().raw(key);
     }

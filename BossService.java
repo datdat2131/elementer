@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Boss nguyên tố: triệu hồi (thủ công hoặc theo điểm hồi sinh), AI chọn mục tiêu + tung kỹ năng, thanh máu,
@@ -46,7 +47,7 @@ public final class BossService {
         this.plugin = plugin;
         this.cfg = cfg;
         this.bossCfg = bossCfg;
-        this.abilities = new BossAbilities(plugin, cfg, bossCfg, elements, combat);
+        this.abilities = new BossAbilities(plugin, cfg, bossCfg, elements, combat, this::say);
         this.rewards = new BossRewards(cfg, bossCfg, elements, crystals);
         this.bossKey = new NamespacedKey(plugin, "boss_id");
     }
@@ -117,6 +118,7 @@ public final class BossService {
                         "x", loc.getBlockX(), "y", loc.getBlockY(), "z", loc.getBlockZ()));
             }
         }
+        say(b, "spawn");
         return b;
     }
 
@@ -149,6 +151,7 @@ public final class BossService {
                 continue;
             }
             checkEnrage(b);
+            checkHalf(b);
             updateBar(b);
             Player target = nearestPlayer(b);
             if (target == null) continue;
@@ -183,6 +186,16 @@ public final class BossService {
         Fx.sound(b.entity.getLocation(), "entity.ender_dragon.growl", 1.5f, 0.8f);
         for (Player p : b.entity.getWorld().getNearbyPlayers(b.entity.getLocation(), 48)) {
             p.sendMessage(cfg.messages().prefixed("boss.enraged", "boss", b.def.name()));
+        }
+        say(b, "enrage");
+    }
+
+    private void checkHalf(ActiveBoss b) {
+        if (b.saidHalf) return;
+        double max = b.entity.getAttribute(Attribute.MAX_HEALTH).getValue();
+        if (b.entity.getHealth() / max <= 0.5) {
+            b.saidHalf = true;
+            say(b, "half");
         }
     }
 
@@ -227,6 +240,39 @@ public final class BossService {
         if (!died && b.entity.isValid()) b.entity.remove();
     }
 
+    // ------------------------------------------------------------------ Lời thoại
+
+    /**
+     * Boss "nói" trong chat cho người chơi ở gần. Lời thoại lấy từ bosses.yml (lines.<sự kiện>);
+     * lời khi tung kỹ năng ("cast") chỉ xuất hiện ngẫu nhiên và cách nhau tối thiểu settings.cast-line-cooldown-seconds.
+     */
+    void say(ActiveBoss b, String event) {
+        sayTo(b, event, null);
+    }
+
+    private void sayTo(ActiveBoss b, String event, String playerName) {
+        List<String> pool = b.def.lines().get(event);
+        if (pool == null || pool.isEmpty() || !bossCfg.settings().getBoolean("settings.speech-enabled", true)) return;
+        long now = System.currentTimeMillis();
+        if (event.equals("cast")) {
+            if (now < b.nextCastLineAt
+                    || ThreadLocalRandom.current().nextDouble() >= bossCfg.settings().getDouble("settings.cast-line-chance", 0.3)) return;
+            b.nextCastLineAt = now + (long) (bossCfg.settings().getDouble("settings.cast-line-cooldown-seconds", 8) * 1000);
+        }
+        String text = pool.get(ThreadLocalRandom.current().nextInt(pool.size()));
+        String format = bossCfg.settings().getString("settings.speech-format", "&8[{boss}&8] &f{text}");
+        String line = Messages.format(format, "boss", b.def.name(), "text",
+                Messages.format(text, "player", playerName == null ? "" : playerName, "boss", b.def.name()));
+        double range = bossCfg.settings().getDouble("settings.speech-range", 48);
+        for (Player p : b.entity.getWorld().getNearbyPlayers(b.entity.getLocation(), range)) p.sendMessage(Text.c(line));
+    }
+
+    /** Gọi khi một người chơi chết vì sát thương của {@code damagerId}; nếu đó là boss thì boss nói lời "kill". */
+    public void onPlayerKilled(UUID damagerId, String playerName) {
+        ActiveBoss b = active.get(damagerId);
+        if (b != null) sayTo(b, "kill", playerName);
+    }
+
     // ------------------------------------------------------------------ Chết / thưởng
 
     public void onDeath(EntityDeathEvent e) {
@@ -234,6 +280,7 @@ public final class BossService {
         if (b == null) return;
         e.getDrops().clear();
         e.setDroppedExp(0);
+        say(b, "death");
         rewards.give(b);
         cleanup(b, true);
     }

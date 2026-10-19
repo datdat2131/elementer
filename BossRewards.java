@@ -1,8 +1,10 @@
 package com.astrax.elementer;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.Map;
 import java.util.UUID;
@@ -54,6 +56,35 @@ final class BossRewards {
             if (n > 0) crystals.give(p, b.def.element(), n);
             long exp = elements.addExp(p, b.def.exp(), true);
             m.send(p, "boss.reward", "boss", b.def.name(), "crystals", n, "element", element, "exp", exp);
+            giveDrops(p, b, m);
         }
+    }
+
+    /** Vật phẩm rớt thêm: tung xác suất riêng cho từng người, đưa thẳng vào túi đồ (đầy thì rơi xuống chân). */
+    private void giveDrops(Player p, ActiveBoss b, Messages m) {
+        for (BossDrop d : b.def.drops()) {
+            if (ThreadLocalRandom.current().nextDouble() >= d.chance()) continue;
+            int n = d.min() + ThreadLocalRandom.current().nextInt(d.max() - d.min() + 1);
+            for (ItemStack rest : p.getInventory().addItem(new ItemStack(d.material(), n)).values()) {
+                p.getWorld().dropItemNaturally(p.getLocation(), rest);
+            }
+            m.send(p, "boss.reward-item", "amount", n, "item", itemName(d));
+        }
+    }
+
+    static String itemName(BossDrop d) {
+        if (d.name() != null && !d.name().isBlank()) return d.name();
+        return prettify(d.material());
+    }
+
+    /** BLAZE_ROD -> "Blaze Rod". */
+    static String prettify(Material m) {
+        StringBuilder sb = new StringBuilder();
+        for (String part : m.name().toLowerCase(java.util.Locale.ROOT).split("_")) {
+            if (part.isEmpty()) continue;
+            if (sb.length() > 0) sb.append(' ');
+            sb.append(Character.toUpperCase(part.charAt(0))).append(part.substring(1));
+        }
+        return sb.toString();
     }
 }

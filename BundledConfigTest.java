@@ -141,7 +141,8 @@ class BundledConfigTest {
                 "gui.title-main", "gui.lore.skill-damage", "gui.lore.hint-upgrade", "info", "help", "voucher.item-name",
                 "voucher.redeemed", "voucher.invalid", "voucher.max", "unlock.max-reached", "unlock.voucher-only",
                 "wings.on", "wings.off", "admin.given-voucher", "gui.lore.element-voucher", "boss.reward", "boss.spawned",
-                "crystal.item-name", "exchange.success", "exchange.not-enough", "admin.boss-header", "gui.title-exchange"}) {
+                "crystal.item-name", "boss.reward-item", "gui.lore.exchange-need", "gui.lore.exchange-have",
+                "gui.lore.exchange-enough", "gui.boss.abilities-title", "gui.boss.drops-item", "gui.boss.line-entry", "gui.boss.event-spawn", "gui.title-boss", "exchange.success", "exchange.not-enough", "admin.boss-header", "gui.title-exchange"}) {
             assertTrue(m.contains(k), "thiếu khóa " + k);
         }
     }
@@ -176,6 +177,19 @@ class BundledConfigTest {
             assertNotEquals(Element.DRAGON, el, "boss không được cho nguyên tố nạp");
             assertTrue(b.getDouble("health") >= 20 && b.getDouble("scale") <= 4, id);
             assertTrue(b.getInt("rewards.crystals-min") <= b.getInt("rewards.crystals-max"), id);
+            for (String ev : new String[]{"spawn", "cast", "enrage", "kill", "death"}) {
+                assertFalse(b.getStringList("lines." + ev).isEmpty(), id + " thiếu lời thoại " + ev);
+            }
+            java.util.List<java.util.Map<?, ?>> items = b.getMapList("rewards.items");
+            assertFalse(items.isEmpty(), id + " cần vật phẩm rớt");
+            for (java.util.Map<?, ?> it : items) {
+                int mn = ((Number) it.get("min")).intValue();
+                int mx = ((Number) it.get("max")).intValue();
+                double ch = ((Number) it.get("chance")).doubleValue();
+                assertTrue(mn >= 1 && mn <= mx && mx <= 64, id + " số lượng rớt");
+                assertTrue(ch > 0 && ch <= 1, id + " xác suất rớt");
+                assertNotNull(it.get("material"), id);
+            }
             ConfigurationSection ab = b.getConfigurationSection("abilities");
             assertTrue(ab.getKeys(false).size() >= 3, id + " cần ≥ 3 kỹ năng");
             for (String k : ab.getKeys(false)) {

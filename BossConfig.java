@@ -114,7 +114,36 @@ public final class BossConfig {
                 Math.max(0, s.getDouble("armor", 6)), Math.max(0.5, Math.min(4, s.getDouble("scale", 1.5))),
                 Math.max(0.1, Math.min(0.6, s.getDouble("speed", 0.26))), Math.max(8, Math.min(64, s.getDouble("detect-range", 24))),
                 Math.max(0, Math.min(0.9, s.getDouble("enrage-below", 0.4))), Math.max(1, Math.min(2, s.getDouble("enrage-multiplier", 1.3))),
-                cmin, Math.max(cmin, s.getInt("rewards.crystals-max", 8)), Math.max(0, s.getLong("rewards.exp", 500)), abilities);
+                cmin, Math.max(cmin, s.getInt("rewards.crystals-max", 8)), Math.max(0, s.getLong("rewards.exp", 500)), abilities,
+                lines(s.getConfigurationSection("lines")), drops(id, s.getMapList("rewards.items")));
+    }
+
+    private List<BossDrop> drops(String bossId, List<Map<?, ?>> raw) {
+        List<BossDrop> out = new ArrayList<>();
+        for (Map<?, ?> m : raw) {
+            Material mat = Material.matchMaterial(String.valueOf(m.get("material")));
+            if (mat == null || !mat.isItem()) {
+                log.warning("Boss '" + bossId + "' rewards.items: vật phẩm không hợp lệ '" + m.get("material") + "'.");
+                continue;
+            }
+            int min = Math.max(1, Math.min(64, (int) num(m.get("min") == null ? 1 : m.get("min"))));
+            int max = Math.max(min, Math.min(64, (int) num(m.get("max") == null ? min : m.get("max"))));
+            double chance = Math.max(0, Math.min(1, m.get("chance") == null ? 1.0 : num(m.get("chance"))));
+            Object nm = m.get("name");
+            out.add(new BossDrop(mat, min, max, chance, nm == null ? null : String.valueOf(nm)));
+        }
+        return List.copyOf(out);
+    }
+
+    /** Lời thoại theo sự kiện: spawn, cast, enrage, half, kill, death. */
+    private Map<String, List<String>> lines(ConfigurationSection s) {
+        Map<String, List<String>> out = new HashMap<>();
+        if (s == null) return out;
+        for (String k : s.getKeys(false)) {
+            List<String> l = s.getStringList(k);
+            if (!l.isEmpty()) out.put(k.toLowerCase(Locale.ROOT), List.copyOf(l));
+        }
+        return out;
     }
 
     private List<SkillDef> abilities(String bossId, Element el, ConfigurationSection s) {
@@ -144,7 +173,7 @@ public final class BossConfig {
                 }
             }
             n++;
-            out.add(new SkillDef("boss:" + bossId + ":" + key, el, n, key, Material.PAPER, List.of(), type, false, 1,
+            out.add(new SkillDef("boss:" + bossId + ":" + key, el, n, a.getString("name", key), Material.PAPER, List.of(), type, false, 1,
                     Math.max(1, a.getDouble("cooldown", 10)), Math.max(0, a.getDouble("damage", 0)),
                     Math.max(0, a.getDouble("range", 20)), Math.max(0, a.getDouble("radius", 0)),
                     Math.max(0, Math.min(1, a.getDouble("power", 0.1))), 0, 1, 0, 1,
@@ -177,6 +206,12 @@ public final class BossConfig {
     public BossDef boss(String id) { return id == null ? null : bosses.get(id.toLowerCase(Locale.ROOT)); }
     public Map<String, BossDef> bosses() { return bosses; }
     public List<BossSpawnPoint> spawns() { return spawns; }
+
+    /** Boss đầu tiên rơi Tinh Thể của nguyên tố này (null nếu chưa có). */
+    public BossDef bossFor(Element e) {
+        for (BossDef b : bosses.values()) if (b.element() == e) return b;
+        return null;
+    }
 
     public Material crystalMaterial(Element e) { return crystalMaterial.getOrDefault(e, Material.AMETHYST_SHARD); }
 

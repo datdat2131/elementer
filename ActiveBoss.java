@@ -20,6 +20,8 @@ final class ActiveBoss {
     final Set<UUID> viewers = new HashSet<>();
     long nextCastAt;
     boolean enraged;
+    boolean saidHalf;
+    long nextCastLineAt;
 
     ActiveBoss(BossDef def, LivingEntity entity, BossBar bar, int spawnIndex) {
         this.def = def;

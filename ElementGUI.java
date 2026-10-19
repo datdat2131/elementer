@@ -19,6 +19,7 @@ public final class ElementGUI implements Listener {
     private final ElementService elements;
     private final SkillService skills;
     private final InfoPages info;
+    private final ExchangePages exchangePages;
     private final SkillPage skillPage;
     private final OwnershipActions actions;
     private final AuraService aura;
@@ -34,7 +35,8 @@ public final class ElementGUI implements Listener {
         this.aura = aura;
         this.crystals = crystals;
         GuiItems ui = new GuiItems(cfg);
-        this.info = new InfoPages(plugin, cfg, elements, ui, crystals, bossCfg);
+        this.info = new InfoPages(plugin, cfg, elements, ui);
+        this.exchangePages = new ExchangePages(cfg, elements, ui, crystals, bossCfg);
         this.skillPage = new SkillPage(cfg, skills, ui);
     }
 
@@ -84,7 +86,8 @@ public final class ElementGUI implements Listener {
             case TOP -> {
                 if (slot == 31) openMain(p);
             }
-            case EXCHANGE -> clickExchange(p, slot);
+            case EXCHANGE -> clickExchange(p, slot, e.isRightClick());
+            case BOSS -> clickBoss(p, slot, h.element);
         }
     }
 
@@ -120,24 +123,40 @@ public final class ElementGUI implements Listener {
         else info.awaken(p, d);
     }
 
-    private void openExchange(Player p) {
+    /** Mở trang đổi Tinh Thể lấy Vé Nguyên Tố. */
+    public void openExchange(Player p) {
         PlayerData d = elements.get(p);
         if (d == null) cfg.messages().send(p, "data-loading");
-        else info.exchange(p, d);
+        else exchangePages.exchange(p, d);
     }
 
-    private void clickExchange(Player p, int slot) {
+    /** Chuột trái: đổi vé. Chuột phải: xem thông tin boss rơi tinh thể này. */
+    private void clickExchange(Player p, int slot, boolean right) {
         if (slot == GuiHolder.ELEMENT_BACK_SLOT) {
             openMain(p);
             return;
         }
         Element[] all = Element.values();
         for (int i = 0; i < GuiHolder.ELEMENT_SLOTS.length; i++) {
-            if (GuiHolder.ELEMENT_SLOTS[i] == slot && cfg.element(all[i]) != null) {
+            if (GuiHolder.ELEMENT_SLOTS[i] != slot || cfg.element(all[i]) == null) continue;
+            if (right) {
+                PlayerData d = elements.get(p);
+                if (d != null) exchangePages.boss(p, d, all[i]);
+            } else {
                 crystals.exchangeAndNotify(p, all[i]);
                 openExchange(p);
-                return;
             }
+            return;
+        }
+    }
+
+    private void clickBoss(Player p, int slot, Element element) {
+        if (slot == 16 && element != null) {
+            crystals.exchangeAndNotify(p, element);
+            PlayerData d = elements.get(p);
+            if (d != null) exchangePages.boss(p, d, element);
+        } else if (slot == 22) {
+            openExchange(p);
         }
     }
 

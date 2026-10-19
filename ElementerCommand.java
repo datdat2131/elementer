@@ -115,6 +115,10 @@ public final class ElementerCommand implements CommandExecutor, TabCompleter {
             case "exchange" -> {
                 if (!allowed(p, "elementer.command.exchange")) return true;
                 if (args.length < 2) {
+                    gui.openExchange(p);
+                    return true;
+                }
+                if (args[1].equalsIgnoreCase("list")) {
                     sendExchangeList(p);
                     return true;
                 }
@@ -231,7 +235,10 @@ public final class ElementerCommand implements CommandExecutor, TabCompleter {
                 for (Element e : Element.values()) out.add(e.alias());
             }
             if (sub.equals("aura") || sub.equals("wings")) out.addAll(List.of("on", "off"));
-            if (sub.equals("exchange")) for (Element e : Element.values()) if (bossCfg.exchangeCost(e) != null) out.add(e.alias());
+            if (sub.equals("exchange")) {
+                out.add("list");
+                for (Element e : Element.values()) if (bossCfg.exchangeCost(e) != null) out.add(e.alias());
+            }
         }
         return out;
     }

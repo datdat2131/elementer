@@ -7,6 +7,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
 /** Ghi nhận sát thương lên boss, xử lý boss chết, ẩn thanh máu khi người chơi thoát. */
@@ -29,6 +30,14 @@ public final class BossListener implements Listener {
     @EventHandler(priority = EventPriority.HIGH)
     public void onDeath(EntityDeathEvent e) {
         bosses.onDeath(e);
+    }
+
+    /** Người chơi chết do boss: boss nói lời chế giễu. */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onPlayerDeath(PlayerDeathEvent e) {
+        if (e.getEntity().getLastDamageCause() instanceof EntityDamageByEntityEvent ev) {
+            bosses.onPlayerKilled(ev.getDamager().getUniqueId(), e.getEntity().getName());
+        }
     }
 
     @EventHandler

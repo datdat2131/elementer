@@ -11,6 +11,11 @@ settings:
   min-damage-share: 0.05        # phải gây >= 5% tổng sát thương lên boss mới nhận thưởng
   announce: true
   spawn-when-player-within: 96  # điểm hồi sinh chỉ spawn khi có người chơi trong bán kính này
+  speech-enabled: true          # boss "nói" trong chat (lines của từng boss bên dưới)
+  speech-range: 48
+  speech-format: "&8[{boss}&8] &f{text}"
+  cast-line-chance: 0.3         # xác suất nói khi tung kỹ năng
+  cast-line-cooldown-seconds: 8 # khoảng cách tối thiểu giữa hai lời khi tung kỹ năng
 
 # Vật phẩm dùng làm Tinh Thể (nhận diện bằng thẻ ẩn, không lẫn với vật phẩm thường)
 crystals:
@@ -36,6 +41,7 @@ exchange:
 spawns: []
 
 # Boss: dùng /elementeradmin boss spawn <id> để triệu hồi tại chỗ bạn đứng.
+# rewards.items: vật phẩm rớt thêm (ngoài Tinh Thể): { material, min, max (<=64), chance 0-1, name (tùy chọn) } - roll riêng cho từng người nhận thưởng.
 # abilities: type = PROJECTILE | AOE_SELF | AOE_TARGET | HEAL_SELF (power = % máu tối đa hồi, 0-1)
 #   Đòn vùng (AOE_*) luôn có báo hiệu: vòng hạt hiện trước, sau delay-ticks mới gây sát thương.
 #   effects dùng cùng khóa như skills.yml (burn-seconds, slow-seconds, root-seconds, knockback, lift, pull, blind-seconds...)
@@ -52,9 +58,17 @@ bosses:
     detect-range: 28
     enrage-below: 0.4           # còn dưới 40% máu thì nổi điên
     enrage-multiplier: 1.3
-    rewards: { crystals-min: 4, crystals-max: 8, exp: 600 }
+    rewards: { crystals-min: 4, crystals-max: 8, exp: 600, items: [{ material: BLAZE_ROD, min: 3, max: 6, chance: 1.0 }, { material: DIAMOND, min: 1, max: 3, chance: 0.3 }] }
+    lines:                      # lời thoại boss; {player} = người chơi liên quan
+      spawn: ["Kẻ nào dám đánh thức ngọn lửa địa ngục?"]
+      cast: ["Hãy cháy thành tro đi!", "Lửa của ta thiêu rụi tất cả!"]
+      half: ["Lửa của ta thiêu rụi tất cả!"]
+      enrage: ["Ngọn lửa... bùng cháy dữ dội hơn!"]
+      kill: ["Ngươi sẽ nếm trải hỏa ngục, {player}!"]
+      death: ["Ngọn lửa... không thể... tắt..."]
     abilities:
       fireball:
+        name: "Hỏa Cầu"
         type: PROJECTILE
         damage: 8
         range: 28
@@ -63,6 +77,7 @@ bosses:
         sound: "entity.blaze.shoot"
         effects: { burn-seconds: 4, knockback: 0.4 }
       inferno_ring:
+        name: "Vòng Lửa Địa Ngục"
         type: AOE_SELF
         damage: 9
         radius: 6
@@ -71,6 +86,7 @@ bosses:
         sound: "item.firecharge.use"
         effects: { delay-ticks: 20, burn-seconds: 5, knockback: 1.0 }
       meteor:
+        name: "Thiên Thạch"
         type: AOE_TARGET
         damage: 12
         radius: 4
@@ -91,9 +107,17 @@ bosses:
     detect-range: 28
     enrage-below: 0.4
     enrage-multiplier: 1.3
-    rewards: { crystals-min: 4, crystals-max: 8, exp: 600 }
+    rewards: { crystals-min: 4, crystals-max: 8, exp: 600, items: [{ material: BLUE_ICE, min: 8, max: 16, chance: 1.0 }, { material: DIAMOND, min: 1, max: 3, chance: 0.3 }] }
+    lines:                      # lời thoại boss; {player} = người chơi liên quan
+      spawn: ["Ai dám xâm phạm vương quốc băng giá của ta?"]
+      cast: ["Hãy đóng băng đi!", "Cái lạnh này sẽ nuốt chửng các ngươi."]
+      half: ["Cái lạnh này sẽ nuốt chửng các ngươi."]
+      enrage: ["Băng giá... sẽ chôn vùi các ngươi!"]
+      kill: ["Hãy ngủ yên trong băng, {player}."]
+      death: ["Băng... đang tan..."]
     abilities:
       ice_shard:
+        name: "Băng Tiễn"
         type: PROJECTILE
         damage: 7
         range: 28
@@ -102,6 +126,7 @@ bosses:
         sound: "entity.snowball.throw"
         effects: { slow-seconds: 3, slow-amplifier: 1, freeze-ticks: 100 }
       frost_nova:
+        name: "Bão Tuyết"
         type: AOE_SELF
         damage: 6
         radius: 7
@@ -110,6 +135,7 @@ bosses:
         sound: "block.glass.break"
         effects: { delay-ticks: 20, slow-seconds: 4, slow-amplifier: 2, freeze-ticks: 140 }
       ice_cage:
+        name: "Lồng Băng"
         type: AOE_TARGET
         damage: 8
         radius: 3.5
@@ -130,9 +156,17 @@ bosses:
     detect-range: 28
     enrage-below: 0.4
     enrage-multiplier: 1.3
-    rewards: { crystals-min: 4, crystals-max: 8, exp: 600 }
+    rewards: { crystals-min: 4, crystals-max: 8, exp: 600, items: [{ material: LIGHTNING_ROD, min: 2, max: 4, chance: 1.0 }, { material: DIAMOND, min: 1, max: 3, chance: 0.3 }] }
+    lines:                      # lời thoại boss; {player} = người chơi liên quan
+      spawn: ["Sấm sét đã triệu hồi ta!"]
+      cast: ["Hãy chịu lôi đình!", "Trời xanh phán xét các ngươi!"]
+      half: ["Trời xanh phán xét các ngươi!"]
+      enrage: ["Cơn thịnh nộ của sấm sét!"]
+      kill: ["Lôi đình đã phán quyết, {player}!"]
+      death: ["Tia chớp... cuối cùng..."]
     abilities:
       bolt:
+        name: "Sét Đánh"
         type: AOE_TARGET
         damage: 13
         radius: 2.5
@@ -142,6 +176,7 @@ bosses:
         sound: "entity.lightning_bolt.thunder"
         effects: { delay-ticks: 12, lightning-visual: 1, root-seconds: 0.6 }
       storm:
+        name: "Bão Sét"
         type: AOE_TARGET
         damage: 7
         radius: 6
@@ -151,6 +186,7 @@ bosses:
         sound: "entity.lightning_bolt.thunder"
         effects: { delay-ticks: 20, repeat: 4, interval-ticks: 10, lightning-visual: 1 }
       shock_nova:
+        name: "Xung Điện"
         type: AOE_SELF
         damage: 8
         radius: 5
@@ -170,9 +206,17 @@ bosses:
     detect-range: 26
     enrage-below: 0.35
     enrage-multiplier: 1.3
-    rewards: { crystals-min: 4, crystals-max: 8, exp: 600 }
+    rewards: { crystals-min: 4, crystals-max: 8, exp: 600, items: [{ material: IRON_BLOCK, min: 2, max: 4, chance: 1.0 }, { material: EMERALD, min: 4, max: 8, chance: 0.5 }] }
+    lines:                      # lời thoại boss; {player} = người chơi liên quan
+      spawn: ["Kẻ xâm nhập... rời khỏi núi của ta!"]
+      cast: ["Đất đá sẽ nghiền nát ngươi!", "Núi non không bao giờ gục ngã."]
+      half: ["Núi non không bao giờ gục ngã."]
+      enrage: ["Cơn thịnh nộ của đại địa!"]
+      kill: ["Hãy trở về với đất, {player}."]
+      death: ["Đá... vỡ..."]
     abilities:
       quake:
+        name: "Địa Chấn"
         type: AOE_SELF
         damage: 10
         radius: 7
@@ -181,6 +225,7 @@ bosses:
         sound: "entity.generic.explode"
         effects: { delay-ticks: 18, lift: 0.8, slow-seconds: 2, slow-amplifier: 1 }
       boulder:
+        name: "Ném Đá"
         type: PROJECTILE
         damage: 9
         range: 22
@@ -189,6 +234,7 @@ bosses:
         sound: "block.stone.break"
         effects: { knockback: 1.0 }
       stone_skin:
+        name: "Da Đá"
         type: HEAL_SELF
         power: 0.08
         cooldown: 25
@@ -205,9 +251,17 @@ bosses:
     detect-range: 30
     enrage-below: 0.4
     enrage-multiplier: 1.3
-    rewards: { crystals-min: 4, crystals-max: 8, exp: 600 }
+    rewards: { crystals-min: 4, crystals-max: 8, exp: 600, items: [{ material: WIND_CHARGE, min: 8, max: 16, chance: 1.0 }, { material: DIAMOND, min: 1, max: 3, chance: 0.3 }] }
+    lines:                      # lời thoại boss; {player} = người chơi liên quan
+      spawn: ["Gió báo cho ta biết có kẻ lạ..."]
+      cast: ["Hãy bị cuốn đi!", "Cuồng phong sẽ xé nát các ngươi!"]
+      half: ["Cuồng phong sẽ xé nát các ngươi!"]
+      enrage: ["Bão tố đang thức tỉnh!"]
+      kill: ["Gió đã mang ngươi đi, {player}."]
+      death: ["Gió... lặng rồi..."]
     abilities:
       gale:
+        name: "Cuồng Phong"
         type: PROJECTILE
         damage: 7
         range: 26
@@ -216,6 +270,7 @@ bosses:
         sound: "entity.player.attack.sweep"
         effects: { knockback: 1.2 }
       cyclone:
+        name: "Lốc Xoáy"
         type: AOE_SELF
         damage: 6
         radius: 8
@@ -224,6 +279,7 @@ bosses:
         sound: "entity.breeze.wind_burst"
         effects: { delay-ticks: 15, pull: 1.0, lift: 0.6, repeat: 3, interval-ticks: 10 }
       wind_slash:
+        name: "Lưỡi Gió"
         type: AOE_TARGET
         damage: 9
         radius: 3
@@ -244,9 +300,17 @@ bosses:
     detect-range: 30
     enrage-below: 0.4
     enrage-multiplier: 1.3
-    rewards: { crystals-min: 4, crystals-max: 8, exp: 600 }
+    rewards: { crystals-min: 4, crystals-max: 8, exp: 600, items: [{ material: GOLDEN_APPLE, min: 2, max: 4, chance: 1.0 }, { material: DIAMOND, min: 1, max: 3, chance: 0.3 }] }
+    lines:                      # lời thoại boss; {player} = người chơi liên quan
+      spawn: ["Ánh sáng sẽ phán xét kẻ xâm phạm!"]
+      cast: ["Hãy chịu sự thanh tẩy!", "Quang minh luôn soi đường!"]
+      half: ["Quang minh luôn soi đường!"]
+      enrage: ["Ánh sáng... bùng lên rực rỡ!"]
+      kill: ["Ngươi đã thất bại, {player}."]
+      death: ["Ánh sáng... sẽ trở lại..."]
     abilities:
       holy_beam:
+        name: "Tia Thánh"
         type: PROJECTILE
         damage: 8
         range: 30
@@ -255,6 +319,7 @@ bosses:
         sound: "block.beacon.activate"
         effects: { weakness-seconds: 4 }
       judgment:
+        name: "Phán Xét"
         type: AOE_TARGET
         damage: 12
         radius: 4
@@ -264,6 +329,7 @@ bosses:
         sound: "block.beacon.power_select"
         effects: { delay-ticks: 25, blind-seconds: 2 }
       radiance:
+        name: "Hào Quang"
         type: AOE_SELF
         damage: 7
         radius: 6
@@ -272,6 +338,7 @@ bosses:
         sound: "block.amethyst_block.chime"
         effects: { delay-ticks: 18, blind-seconds: 2, knockback: 0.8 }
       mend:
+        name: "Chữa Lành"
         type: HEAL_SELF
         power: 0.1
         cooldown: 30
