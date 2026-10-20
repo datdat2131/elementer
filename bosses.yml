@@ -41,6 +41,7 @@ exchange:
 spawns: []
 
 # Boss: dùng /elementeradmin boss spawn <id> để triệu hồi tại chỗ bạn đứng.
+# rewards.voucher-chance: xác suất (0-1) rớt thẳng 1 Vé Nguyên Tố của boss cho mỗi người nhận thưởng (bỏ qua nếu đã sở hữu/đủ 3 nguyên tố).
 # rewards.items: vật phẩm rớt thêm (ngoài Tinh Thể): { material, min, max (<=64), chance 0-1, name (tùy chọn) } - roll riêng cho từng người nhận thưởng.
 # abilities: type = PROJECTILE | AOE_SELF | AOE_TARGET | HEAL_SELF (power = % máu tối đa hồi, 0-1)
 #   Đòn vùng (AOE_*) luôn có báo hiệu: vòng hạt hiện trước, sau delay-ticks mới gây sát thương.
@@ -58,7 +59,7 @@ bosses:
     detect-range: 28
     enrage-below: 0.4           # còn dưới 40% máu thì nổi điên
     enrage-multiplier: 1.3
-    rewards: { crystals-min: 4, crystals-max: 8, exp: 600, items: [{ material: BLAZE_ROD, min: 3, max: 6, chance: 1.0 }, { material: DIAMOND, min: 1, max: 3, chance: 0.3 }] }
+    rewards: { crystals-min: 4, crystals-max: 8, exp: 600, voucher-chance: 0.05, items: [{ material: BLAZE_ROD, min: 3, max: 6, chance: 1.0 }, { material: DIAMOND, min: 1, max: 3, chance: 0.3 }] }
     lines:                      # lời thoại boss; {player} = người chơi liên quan
       spawn: ["Kẻ nào dám đánh thức ngọn lửa địa ngục?"]
       cast: ["Hãy cháy thành tro đi!", "Lửa của ta thiêu rụi tất cả!"]
@@ -107,7 +108,7 @@ bosses:
     detect-range: 28
     enrage-below: 0.4
     enrage-multiplier: 1.3
-    rewards: { crystals-min: 4, crystals-max: 8, exp: 600, items: [{ material: BLUE_ICE, min: 8, max: 16, chance: 1.0 }, { material: DIAMOND, min: 1, max: 3, chance: 0.3 }] }
+    rewards: { crystals-min: 4, crystals-max: 8, exp: 600, voucher-chance: 0.05, items: [{ material: BLUE_ICE, min: 8, max: 16, chance: 1.0 }, { material: DIAMOND, min: 1, max: 3, chance: 0.3 }] }
     lines:                      # lời thoại boss; {player} = người chơi liên quan
       spawn: ["Ai dám xâm phạm vương quốc băng giá của ta?"]
       cast: ["Hãy đóng băng đi!", "Cái lạnh này sẽ nuốt chửng các ngươi."]
@@ -156,7 +157,7 @@ bosses:
     detect-range: 28
     enrage-below: 0.4
     enrage-multiplier: 1.3
-    rewards: { crystals-min: 4, crystals-max: 8, exp: 600, items: [{ material: LIGHTNING_ROD, min: 2, max: 4, chance: 1.0 }, { material: DIAMOND, min: 1, max: 3, chance: 0.3 }] }
+    rewards: { crystals-min: 4, crystals-max: 8, exp: 600, voucher-chance: 0.05, items: [{ material: LIGHTNING_ROD, min: 2, max: 4, chance: 1.0 }, { material: DIAMOND, min: 1, max: 3, chance: 0.3 }] }
     lines:                      # lời thoại boss; {player} = người chơi liên quan
       spawn: ["Sấm sét đã triệu hồi ta!"]
       cast: ["Hãy chịu lôi đình!", "Trời xanh phán xét các ngươi!"]
@@ -206,7 +207,7 @@ bosses:
     detect-range: 26
     enrage-below: 0.35
     enrage-multiplier: 1.3
-    rewards: { crystals-min: 4, crystals-max: 8, exp: 600, items: [{ material: IRON_BLOCK, min: 2, max: 4, chance: 1.0 }, { material: EMERALD, min: 4, max: 8, chance: 0.5 }] }
+    rewards: { crystals-min: 4, crystals-max: 8, exp: 600, voucher-chance: 0.05, items: [{ material: IRON_BLOCK, min: 2, max: 4, chance: 1.0 }, { material: EMERALD, min: 4, max: 8, chance: 0.5 }] }
     lines:                      # lời thoại boss; {player} = người chơi liên quan
       spawn: ["Kẻ xâm nhập... rời khỏi núi của ta!"]
       cast: ["Đất đá sẽ nghiền nát ngươi!", "Núi non không bao giờ gục ngã."]
@@ -251,7 +252,7 @@ bosses:
     detect-range: 30
     enrage-below: 0.4
     enrage-multiplier: 1.3
-    rewards: { crystals-min: 4, crystals-max: 8, exp: 600, items: [{ material: WIND_CHARGE, min: 8, max: 16, chance: 1.0 }, { material: DIAMOND, min: 1, max: 3, chance: 0.3 }] }
+    rewards: { crystals-min: 4, crystals-max: 8, exp: 600, voucher-chance: 0.05, items: [{ material: WIND_CHARGE, min: 8, max: 16, chance: 1.0 }, { material: DIAMOND, min: 1, max: 3, chance: 0.3 }] }
     lines:                      # lời thoại boss; {player} = người chơi liên quan
       spawn: ["Gió báo cho ta biết có kẻ lạ..."]
       cast: ["Hãy bị cuốn đi!", "Cuồng phong sẽ xé nát các ngươi!"]
@@ -300,7 +301,7 @@ bosses:
     detect-range: 30
     enrage-below: 0.4
     enrage-multiplier: 1.3
-    rewards: { crystals-min: 4, crystals-max: 8, exp: 600, items: [{ material: GOLDEN_APPLE, min: 2, max: 4, chance: 1.0 }, { material: DIAMOND, min: 1, max: 3, chance: 0.3 }] }
+    rewards: { crystals-min: 4, crystals-max: 8, exp: 600, voucher-chance: 0.05, items: [{ material: GOLDEN_APPLE, min: 2, max: 4, chance: 1.0 }, { material: DIAMOND, min: 1, max: 3, chance: 0.3 }] }
     lines:                      # lời thoại boss; {player} = người chơi liên quan
       spawn: ["Ánh sáng sẽ phán xét kẻ xâm phạm!"]
       cast: ["Hãy chịu sự thanh tẩy!", "Quang minh luôn soi đường!"]

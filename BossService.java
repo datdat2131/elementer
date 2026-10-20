@@ -43,12 +43,12 @@ public final class BossService {
     private BukkitTask spawnTask;
 
     public BossService(ElementerCore plugin, ElementConfig cfg, BossConfig bossCfg, ElementService elements,
-                       CombatService combat, CrystalService crystals) {
+                       CombatService combat, CrystalService crystals, VoucherService vouchers) {
         this.plugin = plugin;
         this.cfg = cfg;
         this.bossCfg = bossCfg;
         this.abilities = new BossAbilities(plugin, cfg, bossCfg, elements, combat, this::say);
-        this.rewards = new BossRewards(cfg, bossCfg, elements, crystals);
+        this.rewards = new BossRewards(cfg, bossCfg, elements, crystals, vouchers);
         this.bossKey = new NamespacedKey(plugin, "boss_id");
     }
 

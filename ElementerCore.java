@@ -56,7 +56,7 @@ public final class ElementerCore extends JavaPlugin {
         bossConfig = new BossConfig(this, elementConfig);
         bossConfig.load();
         crystalService = new CrystalService(this, elementConfig, bossConfig, elementService, voucherService);
-        bossService = new BossService(this, elementConfig, bossConfig, elementService, combatService, crystalService);
+        bossService = new BossService(this, elementConfig, bossConfig, elementService, combatService, crystalService, voucherService);
         gui = new ElementGUI(this, elementConfig, elementService, skillService, actions, auraService, crystalService, bossConfig);
 
         Bukkit.getPluginManager().registerEvents(new PlayerListener(this, elementConfig, elementService, skillService, combatService), this);

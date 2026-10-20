@@ -36,7 +36,8 @@ class ElementStorageTest {
 
     private PlayerSnapshot snap(UUID id, String name, String el, int level, long exp) {
         return new PlayerSnapshot(id, name, el, level, exp, 4, 2, 100, 20000, 12345L,
-                Map.of("fire_fireball", 3, "fire_blaze", 2), Set.of("FIRE", "WIND"), false, false);
+                Map.of("fire_fireball", 3, "fire_blaze", 2), Set.of("FIRE", "WIND"), false, false,
+                Map.of("FIRE", new PlayerSnapshot.ProgressEntry(level, exp, 4), "WIND", new PlayerSnapshot.ProgressEntry(3, 10, 1)));
     }
 
     @Test
@@ -53,6 +54,8 @@ class ElementStorageTest {
         assertEquals(3, s.skills().get("fire_fireball"));
         assertEquals(2, s.skills().get("fire_blaze"));
         assertEquals(java.util.Set.of("FIRE", "WIND"), s.unlocked());
+        assertEquals(new PlayerSnapshot.ProgressEntry(12, 345, 4), s.progress().get("FIRE"));
+        assertEquals(new PlayerSnapshot.ProgressEntry(3, 10, 1), s.progress().get("WIND"));
         assertFalse(s.auraEnabled());
         assertFalse(s.wingsEnabled());
     }
@@ -181,5 +184,29 @@ class ElementStorageTest {
         assertTrue(storage.claimVoucher(id, p).join());
         storage.unclaimVoucher(id).join();
         assertTrue(storage.claimVoucher(id, p).join());
+    }
+
+    @Test
+    void savingAgainReplacesProgressRowsAndEmptyProgressClearsThem() {
+        UUID id = UUID.randomUUID();
+        storage.save(snap(id, "Alex", "FIRE", 12, 345)).join();
+        PlayerSnapshot updated = new PlayerSnapshot(id, "Alex", "FIRE", 13, 0, 5, 1, 0, 0, 0, Map.of(), Set.of("FIRE"), true, true,
+                Map.of("FIRE", new PlayerSnapshot.ProgressEntry(13, 0, 5)));
+        storage.save(updated).join();
+        PlayerSnapshot s = storage.load(id).join();
+        assertEquals(1, s.progress().size()); // dòng WIND cũ đã bị thay thế
+        assertEquals(13, s.progress().get("FIRE").level());
+        PlayerSnapshot reset = new PlayerSnapshot(id, "Alex", null, 1, 0, 0, 1, 0, 0, 0, Map.of(), Set.of(), true, true, Map.of());
+        storage.save(reset).join();
+        assertTrue(storage.load(id).join().progress().isEmpty());
+    }
+
+    @Test
+    void oldDatabaseWithoutProgressTableStillLoadsLegacyLevel() throws Exception {
+        UUID id = UUID.randomUUID();
+        storage.save(new PlayerSnapshot(id, "Old", "ICE", 9, 3, 2, 1, 0, 0, 0, Map.of(), Set.of("ICE"), true, true, Map.of())).join();
+        PlayerSnapshot s = storage.load(id).join();
+        assertEquals(9, s.level());          // cột cũ vẫn là cấp của nguyên tố đang dùng
+        assertTrue(s.progress().isEmpty());  // không có dòng tiến trình -> dữ liệu cũ được gán cho nguyên tố đang dùng khi nạp
     }
 }

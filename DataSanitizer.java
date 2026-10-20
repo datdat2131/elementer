@@ -38,16 +38,8 @@ public final class DataSanitizer {
         for (Element u : owned) d.unlock(u);
         d.setAuraEnabled(s.auraEnabled());
         d.setWingsEnabled(s.wingsEnabled());
-        int level = (int) DataSanitizerHelper.clamp(s.level(), 1, curve.maxLevel());
-        if (level != s.level()) log.log(Level.WARNING, "Cấp độ không hợp lệ ({0}) của {1} - đã sửa thành {2}.",
-                new Object[]{s.level(), s.uuid(), level});
-        d.setLevel(level);
-        long exp = Math.max(0, s.exp());
-        long req = curve.required(level);
-        if (req == 0) exp = 0; else if (exp >= req) exp = req - 1;
-        d.setExp(exp);
-        d.setSkillPoints(Math.max(0, s.skillPoints()));
         d.setSelectedSlot(s.selectedSlot());
+        for (Element u : owned) restoreProgress(d, s, u, el, curve, log);
         d.setDailyExp(s.dailyExp());
         d.setDailyDay(s.dailyDay());
         d.setAwakenedAt(s.awakenedAt());
@@ -64,6 +56,33 @@ public final class DataSanitizer {
         }
         d.clearDirty();
         return d;
+    }
+
+    /** Khôi phục tiến trình riêng của một nguyên tố (dữ liệu cũ dùng chung một cấp được gán cho nguyên tố đang dùng). */
+    private static void restoreProgress(PlayerData d, PlayerSnapshot s, Element e, Element active, ExpCurve curve, Logger log) {
+        PlayerSnapshot.ProgressEntry pe = s.progress() == null ? null : s.progress().get(e.name());
+        int level = 1;
+        long exp = 0;
+        int points = 0;
+        if (pe != null) {
+            level = pe.level();
+            exp = pe.exp();
+            points = pe.skillPoints();
+        } else if (e == active) {
+            level = s.level();
+            exp = s.exp();
+            points = s.skillPoints();
+        }
+        int fixed = (int) DataSanitizerHelper.clamp(level, 1, curve.maxLevel());
+        if (fixed != level) {
+            log.log(Level.WARNING, "Cấp độ không hợp lệ ({0}) của {1} ở nguyên tố {2} - đã sửa thành {3}.",
+                    new Object[]{level, s.uuid(), e, fixed});
+        }
+        long req = curve.required(fixed);
+        long fixedExp = Math.max(0, exp);
+        if (req == 0) fixedExp = 0;
+        else if (fixedExp >= req) fixedExp = req - 1;
+        d.setProgress(e, fixed, fixedExp, Math.max(0, points));
     }
 
     /** Tạo mới dữ liệu trống cho người chơi lần đầu. */

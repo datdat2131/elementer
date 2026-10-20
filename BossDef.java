@@ -24,5 +24,6 @@ public record BossDef(
         long exp,
         List<SkillDef> abilities,
         Map<String, List<String>> lines,
-        List<BossDrop> drops) {
+        List<BossDrop> drops,
+        double voucherChance) {
 }

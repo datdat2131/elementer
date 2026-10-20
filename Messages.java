@@ -17,6 +17,11 @@ public final class Messages {
         this.yml = YamlConfiguration.loadConfiguration(file);
     }
 
+    /** Dùng một YAML đã nạp (và đã bù khóa thiếu) thay cho file. */
+    public void use(YamlConfiguration y) {
+        this.yml = y;
+    }
+
     public String raw(String key) {
         String v = yml.getString(key);
         return v == null ? "&c[thiếu tin nhắn: " + key + "]" : v;

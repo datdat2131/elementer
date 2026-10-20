@@ -59,6 +59,9 @@ permissions:
   elementer.admin.boss:
     description: /elementeradmin boss
     default: op
+  elementer.admin.updateconfig:
+    description: /elementeradmin updateconfig
+    default: op
   elementer.admin.reload:
     description: /elementeradmin reload
     default: op
@@ -80,3 +83,4 @@ permissions:
       elementer.admin.set: true
       elementer.admin.reset: true
       elementer.admin.boss: true
+      elementer.admin.updateconfig: true

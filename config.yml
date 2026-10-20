@@ -12,15 +12,11 @@ input:
 awaken:
   confirm-seconds: 8    # thời gian xác nhận khi bấm mở khóa nguyên tố trong GUI
 
-# Nhiều nguyên tố: cấp độ, EXP và điểm kỹ năng dùng chung; mỗi nguyên tố có kỹ năng và cấp kỹ năng riêng.
+# Nhiều nguyên tố: mỗi nguyên tố có cấp, EXP và điểm kỹ năng RIÊNG (bắt đầu từ cấp 1 khi sở hữu, giữ nguyên khi chuyển đi).
+# Nguyên tố đầu tiên miễn phí (chọn trong GUI). Mọi nguyên tố sau đó CHỈ nhận bằng Vé Nguyên Tố: rớt từ boss hoặc đổi
+# bằng Tinh Thể boss (bosses.yml); không còn mở khóa bằng cấp độ/điểm kỹ năng.
 unlock:
   max-owned: 3          # TỐI ĐA số nguyên tố một người chơi được sở hữu (kể cả nguyên tố giới hạn nhận bằng vé)
-  # Điều kiện mở khóa nguyên tố thứ N bằng cấp + điểm kỹ năng (N = số nguyên tố đã có + 1). Nguyên tố đầu tiên miễn phí.
-  # Nguyên tố giới hạn (obtain: VOUCHER trong elements.yml) KHÔNG mở khóa theo cách này mà chỉ nhận bằng Vé Nguyên Tố.
-  requirements:
-    - { level: 1, points: 0 }
-    - { level: 15, points: 3 }
-    - { level: 30, points: 6 }
 
 voucher:
   material: PAPER       # vật phẩm dùng làm vé; chuột phải để sở hữu nguyên tố

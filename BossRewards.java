@@ -16,12 +16,15 @@ final class BossRewards {
     private final BossConfig bossCfg;
     private final ElementService elements;
     private final CrystalService crystals;
+    private final VoucherService vouchers;
 
-    BossRewards(ElementConfig cfg, BossConfig bossCfg, ElementService elements, CrystalService crystals) {
+    BossRewards(ElementConfig cfg, BossConfig bossCfg, ElementService elements, CrystalService crystals,
+                VoucherService vouchers) {
         this.cfg = cfg;
         this.bossCfg = bossCfg;
         this.elements = elements;
         this.crystals = crystals;
+        this.vouchers = vouchers;
     }
 
     void give(ActiveBoss b) {
@@ -56,8 +59,21 @@ final class BossRewards {
             if (n > 0) crystals.give(p, b.def.element(), n);
             long exp = elements.addExp(p, b.def.exp(), true);
             m.send(p, "boss.reward", "boss", b.def.name(), "crystals", n, "element", element, "exp", exp);
+            giveVoucher(p, b, element, m);
             giveDrops(p, b, m);
         }
+    }
+
+    /**
+     * Có xác suất rớt thẳng Vé Nguyên Tố của boss (rewards.voucher-chance). Không rớt nếu người chơi đã sở hữu
+     * nguyên tố đó hoặc đã đủ số nguyên tố tối đa (vé sẽ lãng phí).
+     */
+    private void giveVoucher(Player p, ActiveBoss b, String element, Messages m) {
+        if (b.def.voucherChance() <= 0 || ThreadLocalRandom.current().nextDouble() >= b.def.voucherChance()) return;
+        PlayerData d = elements.get(p);
+        if (d == null || d.hasUnlocked(b.def.element()) || d.unlockedCount() >= elements.ownership().maxOwned()) return;
+        vouchers.give(p, b.def.element(), 1);
+        m.send(p, "boss.reward-voucher", "element", element);
     }
 
     /** Vật phẩm rớt thêm: tung xác suất riêng cho từng người, đưa thẳng vào túi đồ (đầy thì rơi xuống chân). */

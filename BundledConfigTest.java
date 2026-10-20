@@ -48,18 +48,10 @@ class BundledConfigTest {
     }
 
     @Test
-    void unlockRulesAreSane() throws Exception {
+    void unlockIsVoucherOnlyWithCapOfThree() throws Exception {
         YamlConfiguration cfg = yaml("config.yml");
         assertEquals(3, cfg.getInt("unlock.max-owned"));
-        java.util.List<java.util.Map<?, ?>> reqs = cfg.getMapList("unlock.requirements");
-        assertTrue(reqs.size() >= 3);
-        assertEquals(0, ((Number) reqs.get(0).get("points")).intValue());
-        int prev = 0;
-        for (java.util.Map<?, ?> r : reqs) {
-            int lv = ((Number) r.get("level")).intValue();
-            assertTrue(lv >= prev && lv <= 50, "yêu cầu cấp phải không giảm và ≤ 50");
-            prev = lv;
-        }
+        assertFalse(cfg.contains("unlock.requirements"), "không còn mở khóa bằng cấp/điểm");
         assertEquals("PAPER", cfg.getString("voucher.material"));
     }
 
@@ -139,7 +131,8 @@ class BundledConfigTest {
         for (String k : new String[]{"prefix", "no-permission", "data-loading", "not-awakened", "awaken.success",
                 "level-up", "cast.cooldown", "cast.no-target", "upgrade.success", "top.line", "admin.reloaded",
                 "gui.title-main", "gui.lore.skill-damage", "gui.lore.hint-upgrade", "info", "help", "voucher.item-name",
-                "voucher.redeemed", "voucher.invalid", "voucher.max", "unlock.max-reached", "unlock.voucher-only",
+                "voucher.redeemed", "voucher.invalid", "voucher.max", "unlock.max-reached", "unlock.voucher-only", "unlock.need-voucher", "boss.reward-voucher", "gui.boss.drops-voucher",
+                "gui.lore.element-level",
                 "wings.on", "wings.off", "admin.given-voucher", "gui.lore.element-voucher", "boss.reward", "boss.spawned",
                 "crystal.item-name", "boss.reward-item", "gui.lore.exchange-need", "gui.lore.exchange-have",
                 "gui.lore.exchange-enough", "gui.boss.abilities-title", "gui.boss.drops-item", "gui.boss.line-entry", "gui.boss.event-spawn", "gui.title-boss", "exchange.success", "exchange.not-enough", "admin.boss-header", "gui.title-exchange"}) {
@@ -173,6 +166,7 @@ class BundledConfigTest {
             Element el = Element.parse(b.getString("element"));
             assertNotNull(el, id);
             covered.add(el);
+            assertTrue(b.getDouble("rewards.voucher-chance") >= 0 && b.getDouble("rewards.voucher-chance") <= 0.2, id + " xác suất rớt vé");
             assertNotEquals(Element.DARK, el, "boss không được cho nguyên tố nạp");
             assertNotEquals(Element.DRAGON, el, "boss không được cho nguyên tố nạp");
             assertTrue(b.getDouble("health") >= 20 && b.getDouble("scale") <= 4, id);

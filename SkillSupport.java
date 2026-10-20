@@ -121,6 +121,15 @@ public final class SkillSupport {
         dest.setYaw(t.getLocation().getYaw());
         dest.setPitch(t.getLocation().getPitch());
         t.teleport(dest, PlayerTeleportEvent.TeleportCause.PLUGIN);
+        // Kéo lại KHÔNG hất tung: xóa đẩy lùi của sát thương (ngay lập tức và cả tick kế tiếp) và rơi tự do
+        t.setVelocity(new Vector(0, 0, 0));
+        t.setFallDistance(0);
+        org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
+            if (t.isValid()) {
+                t.setVelocity(new Vector(0, 0, 0));
+                t.setFallDistance(0);
+            }
+        });
         Fx.particle(dest.clone().add(0, 1, 0), "PORTAL", 25, 0.3, 0.6, 0.3, 0.3);
     }
 

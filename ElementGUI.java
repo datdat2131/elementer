@@ -178,19 +178,18 @@ public final class ElementGUI implements Listener {
             if (actions.switchTo(p, chosen)) openElements(p);
             return;
         }
-        // chưa sở hữu: bấm lần đầu để xem điều kiện/xác nhận, lần hai để mở khóa
+        if (d.unlockedCount() > 0 || def.voucherOnly()) { // sau nguyên tố đầu tiên: chỉ nhận bằng vé -> báo cách lấy
+            actions.unlock(p, chosen);
+            return;
+        }
+        // nguyên tố đầu tiên (miễn phí, không đổi được): bấm lần đầu để xác nhận, lần hai để chọn
         long now = System.currentTimeMillis();
         pending.values().removeIf(x -> x.expiresAt() < now);
         Pending pd = pending.get(p.getUniqueId());
         if (pd == null || pd.element() != chosen) {
             long ms = cfg.main().getLong("awaken.confirm-seconds", 8) * 1000L;
             pending.put(p.getUniqueId(), new Pending(chosen, now + ms));
-            if (d.unlockedCount() == 0) {
-                cfg.messages().send(p, "awaken.confirm", "element", def.colored());
-            } else {
-                UnlockReq r = cfg.unlockReq(d.unlockedCount());
-                cfg.messages().send(p, "unlock.confirm", "element", def.colored(), "level", r.level(), "points", r.points());
-            }
+            cfg.messages().send(p, "awaken.confirm", "element", def.colored());
             return;
         }
         pending.remove(p.getUniqueId());

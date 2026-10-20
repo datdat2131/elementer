@@ -23,8 +23,6 @@ public final class OwnershipActions {
     public boolean unlock(Player p, Element e) {
         PlayerData d = elements.get(p);
         boolean first = d != null && d.unlockedCount() == 0;
-        UnlockReq req = d == null ? null : cfg.unlockReq(d.unlockedCount());
-        int pointsBefore = d == null ? 0 : d.getSkillPoints();
         Messages m = cfg.messages();
         switch (elements.ownership().unlock(p, e)) {
             case OK -> {
@@ -33,8 +31,7 @@ public final class OwnershipActions {
                 Fx.ring(p.getLocation(), 1.5, "END_ROD", 24);
                 return true;
             }
-            case LEVEL_TOO_LOW -> m.send(p, "unlock.level-too-low", "level", req.level());
-            case NOT_ENOUGH_POINTS -> m.send(p, "unlock.not-enough-points", "points", req.points(), "have", pointsBefore);
+            case NEED_VOUCHER -> m.send(p, "unlock.need-voucher");
             case MAX_REACHED -> m.send(p, "unlock.max-reached", "max", elements.ownership().maxOwned());
             case VOUCHER_ONLY -> m.send(p, "unlock.voucher-only", "element", colored(e));
             case OWNED -> m.send(p, "unlock.owned");

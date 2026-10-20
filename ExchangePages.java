@@ -127,6 +127,9 @@ final class ExchangePages {
             l.add(fmt("gui.boss.drops-item", "amount", amount, "item", BossRewards.itemName(d),
                     "chance", (int) Math.round(d.chance() * 100)));
         }
+        if (b.voucherChance() > 0) {
+            l.add(fmt("gui.boss.drops-voucher", "element", def.colored(), "chance", Text.num(b.voucherChance() * 100)));
+        }
         l.add(" ");
         double share = bossCfg.settings().getDouble("settings.min-damage-share", 0.05) * 100;
         l.add(fmt("gui.boss.drops-note", "share", (int) Math.round(share)));

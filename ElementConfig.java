@@ -36,7 +36,6 @@ public final class ElementConfig {
     private volatile Map<EntityType, Integer> mobExp = Map.of();
     private volatile Map<Integer, LevelReward> levelRewards = Map.of();
     private volatile Set<String> disabledWorlds = Set.of();
-    private volatile List<UnlockReq> unlockReqs = List.of();
 
     public ElementConfig(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -49,10 +48,18 @@ public final class ElementConfig {
         }
         plugin.reloadConfig();
         this.main = plugin.getConfig();
-        messages.load(new File(plugin.getDataFolder(), "messages.yml"));
+        YamlConfiguration msgs = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "messages.yml"));
+        int added = ConfigUpdates.mergeMissing(msgs, ConfigUpdates.bundled(plugin, "messages.yml"));
+        if (added > 0) {
+            log.warning("messages.yml của bạn thiếu " + added + " tin nhắn mới - đã dùng giá trị mặc định trong bộ nhớ."
+                    + " Chạy /elementeradmin updateconfig để cập nhật file (tự sao lưu).");
+        }
+        messages.use(msgs);
 
         YamlConfiguration el = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "elements.yml"));
         YamlConfiguration sk = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "skills.yml"));
+        ConfigUpdates.warnMissing(plugin, "elements.yml", el, "elements");
+        ConfigUpdates.warnMissing(plugin, "skills.yml", sk, "skills");
         ElementParser ep = new ElementParser(log);
         SkillParser sp = new SkillParser(log);
 
@@ -69,7 +76,6 @@ public final class ElementConfig {
         this.mobExp = parseMobExp();
         this.levelRewards = parseRewards();
         this.disabledWorlds = new HashSet<>(main.getStringList("disabled-worlds"));
-        this.unlockReqs = parseUnlock();
         Fx.setEnabled(main.getBoolean("effects.particles", true));
 
         for (Element e : Element.values()) {
@@ -105,17 +111,6 @@ public final class ElementConfig {
             else out.put(t, Math.max(0, s.getInt(k)));
         }
         return out;
-    }
-
-    private List<UnlockReq> parseUnlock() {
-        List<UnlockReq> out = new java.util.ArrayList<>();
-        for (Map<?, ?> m : main.getMapList("unlock.requirements")) {
-            int level = m.get("level") instanceof Number n ? n.intValue() : 1;
-            int points = m.get("points") instanceof Number n ? n.intValue() : 0;
-            out.add(new UnlockReq(Math.max(1, level), Math.max(0, points)));
-        }
-        if (out.isEmpty()) log.warning("config.yml thiếu unlock.requirements - dùng mặc định (cấp 1, 0 điểm).");
-        return List.copyOf(out);
     }
 
     private Map<Integer, LevelReward> parseRewards() {
@@ -161,12 +156,6 @@ public final class ElementConfig {
     public boolean isProtected(EntityType t) { return protectedTypes.contains(t); }
     public Integer miningExp(Material m) { return miningExp.get(m); }
     public Integer mobExp(EntityType t) { return mobExp.get(t); }
-    /** Điều kiện mở khóa nguyên tố kế tiếp khi đã sở hữu {@code owned} nguyên tố (dùng mục cuối nếu vượt danh sách). */
-    public UnlockReq unlockReq(int owned) {
-        if (unlockReqs.isEmpty()) return new UnlockReq(1, 0);
-        return unlockReqs.get(Math.min(Math.max(0, owned), unlockReqs.size() - 1));
-    }
-
     public Map<Integer, LevelReward> levelRewards() { return levelRewards; }
     public boolean isWorldDisabled(String world) { return disabledWorlds.contains(world); }
 }

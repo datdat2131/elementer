@@ -13,7 +13,7 @@ import java.util.Locale;
 
 /** /elementeradmin reload | give <player> <exp|points> <n> | set <player> <element|level|exp|points> <v> | reset <player> */
 public final class ElementerAdminCommand implements CommandExecutor, TabCompleter {
-    private static final List<String> SUBS = List.of("reload", "give", "set", "reset", "boss");
+    private static final List<String> SUBS = List.of("reload", "give", "set", "reset", "boss", "updateconfig");
     private static final long MAX_AMOUNT = 1_000_000L;
 
     private final ElementerCore plugin;
@@ -123,6 +123,16 @@ public final class ElementerAdminCommand implements CommandExecutor, TabComplete
                     }
                 }
                 m.send(sender, "admin.set-done", "what", what, "player", t.getName(), "value", n);
+            }
+            case "updateconfig" -> {
+                if (!perm(sender, "elementer.admin.updateconfig")) return true;
+                String dir = ConfigUpdates.backupAndReplace(plugin);
+                if (dir == null) {
+                    m.send(sender, "admin.update-failed");
+                } else {
+                    plugin.reloadAll();
+                    cfg.messages().send(sender, "admin.updated", "dir", dir);
+                }
             }
             case "boss" -> {
                 if (!perm(sender, "elementer.admin.boss")) return true;
@@ -237,7 +247,8 @@ public final class ElementerAdminCommand implements CommandExecutor, TabComplete
         String last = args[args.length - 1].toLowerCase(Locale.ROOT);
         if (args.length == 1) {
             for (String s : SUBS) if (s.startsWith(last)) out.add(s);
-        } else if (args.length == 2 && !args[0].equalsIgnoreCase("reload") && !args[0].equalsIgnoreCase("boss")) {
+        } else if (args.length == 2 && !args[0].equalsIgnoreCase("reload") && !args[0].equalsIgnoreCase("boss")
+                && !args[0].equalsIgnoreCase("updateconfig")) {
             for (Player p : Bukkit.getOnlinePlayers()) if (p.getName().toLowerCase(Locale.ROOT).startsWith(last)) out.add(p.getName());
         } else if (args.length == 3 && args[0].equalsIgnoreCase("give")) {
             out.addAll(List.of("exp", "points", "voucher", "crystal"));

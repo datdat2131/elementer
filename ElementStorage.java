@@ -8,7 +8,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -158,6 +160,13 @@ public final class ElementStorage implements AutoCloseable {
                     + "reward_key TEXT NOT NULL,"
                     + "claimed_at INTEGER NOT NULL,"
                     + "PRIMARY KEY (uuid, reward_key))");
+            st.executeUpdate("CREATE TABLE IF NOT EXISTS element_progress ("
+                    + "uuid TEXT NOT NULL,"
+                    + "element TEXT NOT NULL,"
+                    + "level INTEGER NOT NULL DEFAULT 1,"
+                    + "exp INTEGER NOT NULL DEFAULT 0,"
+                    + "skill_points INTEGER NOT NULL DEFAULT 0,"
+                    + "PRIMARY KEY (uuid, element))");
             st.executeUpdate("CREATE TABLE IF NOT EXISTS claimed_vouchers ("
                     + "voucher_id TEXT PRIMARY KEY,"
                     + "player_uuid TEXT NOT NULL,"
@@ -182,21 +191,55 @@ public final class ElementStorage implements AutoCloseable {
     }
 
     private PlayerSnapshot loadSync(UUID id) throws SQLException {
+        String name;
+        String element;
+        int level;
+        long exp;
+        int points;
+        int slot;
+        long dailyExp;
+        long dailyDay;
+        long awakenedAt;
+        String skills;
+        String unlocked;
+        boolean aura;
+        boolean wings;
         try (PreparedStatement ps = connection().prepareStatement(
-                "SELECT name, element, level, exp, skill_points, selected_slot, daily_exp, daily_day, awakened_at, skills, unlocked, aura_enabled, wings_enabled "
-                        + "FROM players WHERE uuid = ?")) {
+                "SELECT name, element, level, exp, skill_points, selected_slot, daily_exp, daily_day, awakened_at, "
+                        + "skills, unlocked, aura_enabled, wings_enabled FROM players WHERE uuid = ?")) {
             ps.setString(1, id.toString());
             try (ResultSet rs = ps.executeQuery()) {
                 if (!rs.next()) return null;
-                return new PlayerSnapshot(id, rs.getString(1), rs.getString(2), rs.getInt(3), rs.getLong(4),
-                        rs.getInt(5), rs.getInt(6), rs.getLong(7), rs.getLong(8), rs.getLong(9),
-                        SkillCodec.parse(rs.getString(10)),
-                        SkillCodec.parseSet(rs.getString(11)), rs.getInt(12) != 0, rs.getInt(13) != 0);
+                name = rs.getString(1);
+                element = rs.getString(2);
+                level = rs.getInt(3);
+                exp = rs.getLong(4);
+                points = rs.getInt(5);
+                slot = rs.getInt(6);
+                dailyExp = rs.getLong(7);
+                dailyDay = rs.getLong(8);
+                awakenedAt = rs.getLong(9);
+                skills = rs.getString(10);
+                unlocked = rs.getString(11);
+                aura = rs.getInt(12) != 0;
+                wings = rs.getInt(13) != 0;
             }
         }
+        Map<String, PlayerSnapshot.ProgressEntry> progress = new HashMap<>();
+        try (PreparedStatement ps = connection().prepareStatement(
+                "SELECT element, level, exp, skill_points FROM element_progress WHERE uuid = ?")) {
+            ps.setString(1, id.toString());
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    progress.put(rs.getString(1), new PlayerSnapshot.ProgressEntry(rs.getInt(2), rs.getLong(3), rs.getInt(4)));
+                }
+            }
+        }
+        return new PlayerSnapshot(id, name, element, level, exp, points, slot, dailyExp, dailyDay, awakenedAt,
+                SkillCodec.parse(skills), SkillCodec.parseSet(unlocked), aura, wings, progress);
     }
 
-    private void saveSync(PlayerSnapshot s) throws SQLException {
+    private void savePlayerRow(PlayerSnapshot s) throws SQLException {
         try (PreparedStatement ps = connection().prepareStatement(
                 "INSERT INTO players (uuid, name, element, level, exp, skill_points, selected_slot, daily_exp, daily_day, "
                         + "awakened_at, skills, updated_at, unlocked, aura_enabled, wings_enabled) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) "
@@ -221,6 +264,40 @@ public final class ElementStorage implements AutoCloseable {
             ps.setInt(14, s.auraEnabled() ? 1 : 0);
             ps.setInt(15, s.wingsEnabled() ? 1 : 0);
             ps.executeUpdate();
+        }
+    }
+
+    /** Ghi dòng người chơi và toàn bộ tiến trình từng nguyên tố trong một giao dịch (hoặc cả hai hoặc không gì cả). */
+    private void saveSync(PlayerSnapshot s) throws SQLException {
+        Connection c = connection();
+        boolean previous = c.getAutoCommit();
+        c.setAutoCommit(false);
+        try {
+            savePlayerRow(s);
+            try (PreparedStatement del = c.prepareStatement("DELETE FROM element_progress WHERE uuid = ?")) {
+                del.setString(1, s.uuid().toString());
+                del.executeUpdate();
+            }
+            if (s.progress() != null && !s.progress().isEmpty()) {
+                try (PreparedStatement ins = c.prepareStatement(
+                        "INSERT INTO element_progress (uuid, element, level, exp, skill_points) VALUES (?,?,?,?,?)")) {
+                    for (Map.Entry<String, PlayerSnapshot.ProgressEntry> e : s.progress().entrySet()) {
+                        ins.setString(1, s.uuid().toString());
+                        ins.setString(2, e.getKey());
+                        ins.setInt(3, e.getValue().level());
+                        ins.setLong(4, e.getValue().exp());
+                        ins.setInt(5, e.getValue().skillPoints());
+                        ins.addBatch();
+                    }
+                    ins.executeBatch();
+                }
+            }
+            c.commit();
+        } catch (SQLException e) {
+            c.rollback();
+            throw e;
+        } finally {
+            c.setAutoCommit(previous);
         }
     }
 

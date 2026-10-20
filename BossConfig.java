@@ -38,6 +38,7 @@ public final class BossConfig {
         File f = new File(plugin.getDataFolder(), "bosses.yml");
         if (!f.exists()) plugin.saveResource("bosses.yml", false);
         this.yml = YamlConfiguration.loadConfiguration(f);
+        ConfigUpdates.warnMissing(plugin, "bosses.yml", yml, "bosses");
         this.crystalMaterial = parseCrystals();
         this.exchangeCost = parseExchange();
         this.bosses = parseBosses();
@@ -115,7 +116,8 @@ public final class BossConfig {
                 Math.max(0.1, Math.min(0.6, s.getDouble("speed", 0.26))), Math.max(8, Math.min(64, s.getDouble("detect-range", 24))),
                 Math.max(0, Math.min(0.9, s.getDouble("enrage-below", 0.4))), Math.max(1, Math.min(2, s.getDouble("enrage-multiplier", 1.3))),
                 cmin, Math.max(cmin, s.getInt("rewards.crystals-max", 8)), Math.max(0, s.getLong("rewards.exp", 500)), abilities,
-                lines(s.getConfigurationSection("lines")), drops(id, s.getMapList("rewards.items")));
+                lines(s.getConfigurationSection("lines")), drops(id, s.getMapList("rewards.items")),
+                Math.max(0, Math.min(1, s.getDouble("rewards.voucher-chance", 0))));
     }
 
     private List<BossDrop> drops(String bossId, List<Map<?, ?>> raw) {

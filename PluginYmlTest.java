@@ -27,7 +27,7 @@ class PluginYmlTest {
             assertNotNull(perms.getConfigurationSection("elementer.command." + p), p);
             assertEquals("true", perms.getString("elementer.command." + p + ".default"));
         }
-        for (String p : List.of("reload", "give", "set", "reset", "boss")) {
+        for (String p : List.of("reload", "give", "set", "reset", "boss", "updateconfig")) {
             assertNotNull(perms.getConfigurationSection("elementer.admin." + p), p);
             assertEquals("op", perms.getString("elementer.admin." + p + ".default"));
         }
@@ -43,7 +43,7 @@ class PluginYmlTest {
         ConfigurationSection children = plugin().getConfigurationSection("permissions.elementer.admin.*.children");
         assertNotNull(children);
         assertTrue(children.getKeys(true).containsAll(List.of("elementer.admin.reload", "elementer.admin.give",
-                "elementer.admin.set", "elementer.admin.reset", "elementer.admin.boss")));
+                "elementer.admin.set", "elementer.admin.reset", "elementer.admin.boss", "elementer.admin.updateconfig")));
     }
 
     @Test

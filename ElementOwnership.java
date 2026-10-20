@@ -7,12 +7,12 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Sở hữu nhiều nguyên tố (tối đa unlock.max-owned): mở khóa (nguyên tố đầu miễn phí, các nguyên tố sau tốn cấp +
- * điểm kỹ năng theo unlock.requirements; nguyên tố giới hạn chỉ nhận bằng vé) và chuyển nguyên tố đang dùng (có hồi chiêu chuyển đổi). Cấp độ, EXP và điểm kỹ năng
- * dùng chung cho mọi nguyên tố; cấp từng kỹ năng được lưu riêng theo kỹ năng.
+ * Sở hữu nhiều nguyên tố (tối đa unlock.max-owned): nguyên tố đầu tiên miễn phí, các nguyên tố sau chỉ nhận bằng vé;
+ * chuyển nguyên tố đang dùng (có hồi chiêu chuyển đổi). Cấp độ, EXP và điểm kỹ năng riêng cho từng nguyên tố
+ * (bắt đầu từ cấp 1 khi sở hữu, giữ nguyên khi chuyển đi); cấp từng kỹ năng lưu riêng theo kỹ năng.
  */
 public final class ElementOwnership {
-    public enum UnlockResult { OK, NO_DATA, DISABLED, OWNED, LEVEL_TOO_LOW, NOT_ENOUGH_POINTS, MAX_REACHED, VOUCHER_ONLY }
+    public enum UnlockResult { OK, NO_DATA, DISABLED, OWNED, NEED_VOUCHER, MAX_REACHED, VOUCHER_ONLY }
 
     public enum SwitchResult { OK, NO_DATA, NOT_OWNED, SAME, COOLDOWN }
 
@@ -48,26 +48,21 @@ public final class ElementOwnership {
         return UnlockResult.OK;
     }
 
-    /** Mở khóa một nguyên tố. Nguyên tố đầu tiên được kích hoạt ngay; các nguyên tố sau cần /elementer switch. */
+    /**
+     * Chọn nguyên tố ĐẦU TIÊN (miễn phí, chỉ trong 6 nguyên tố thường). Mọi nguyên tố sau đó (kể cả nguyên tố giới hạn)
+     * chỉ nhận bằng Vé Nguyên Tố (rớt từ boss hoặc đổi bằng Tinh Thể), không còn mở khóa bằng cấp/điểm.
+     */
     public UnlockResult unlock(Player p, Element e) {
         PlayerData d = elements.get(p);
         if (d == null) return UnlockResult.NO_DATA;
-        if (cfg.element(e) == null) return UnlockResult.DISABLED;
+        ElementDef def = cfg.element(e);
+        if (def == null) return UnlockResult.DISABLED;
         if (d.hasUnlocked(e)) return UnlockResult.OWNED;
-        if (cfg.element(e).voucherOnly()) return UnlockResult.VOUCHER_ONLY;
-        if (d.unlockedCount() >= maxOwned()) return UnlockResult.MAX_REACHED;
-        boolean first = d.unlockedCount() == 0;
-        if (!first) {
-            UnlockReq req = cfg.unlockReq(d.unlockedCount());
-            if (d.getLevel() < req.level()) return UnlockResult.LEVEL_TOO_LOW;
-            if (d.getSkillPoints() < req.points()) return UnlockResult.NOT_ENOUGH_POINTS;
-            d.setSkillPoints(d.getSkillPoints() - req.points());
-        }
+        if (def.voucherOnly()) return UnlockResult.VOUCHER_ONLY;
+        if (d.unlockedCount() > 0) return UnlockResult.NEED_VOUCHER;
         d.unlock(e);
-        if (first || d.getElement() == null) {
-            activate(p, d, e);
-            d.setAwakenedAt(System.currentTimeMillis());
-        }
+        activate(p, d, e);
+        d.setAwakenedAt(System.currentTimeMillis());
         return UnlockResult.OK;
     }
 

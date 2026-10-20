@@ -60,6 +60,10 @@ final class InfoPages {
             boolean owned = d.hasUnlocked(all[i]);
             List<String> lore = new ArrayList<>(def.description());
             lore.add(" ");
+            if (owned) {
+                lore.add(Messages.format(ui.raw("gui.lore.element-level"), "level", d.getLevel(all[i]),
+                        "max", cfg.curve().maxLevel()));
+            }
             if (active) {
                 lore.add(ui.raw("gui.lore.element-active"));
             } else if (owned) {
@@ -67,15 +71,9 @@ final class InfoPages {
                 lore.add(ui.raw("gui.lore.hint-switch"));
             } else {
                 lore.add(ui.raw("gui.lore.element-locked"));
-                if (def.voucherOnly()) {
-                    lore.add(ui.raw("gui.lore.element-voucher"));
-                } else {
-                    if (d.unlockedCount() > 0) {
-                        UnlockReq r = cfg.unlockReq(d.unlockedCount());
-                        lore.add(Messages.format(ui.raw("gui.lore.element-requirement"), "level", r.level(), "points", r.points()));
-                    }
-                    lore.add(ui.raw("gui.lore.hint-unlock"));
-                }
+                // nguyên tố đầu tiên miễn phí; mọi nguyên tố sau (và nguyên tố giới hạn) chỉ nhận bằng Vé Nguyên Tố
+                if (def.voucherOnly() || d.unlockedCount() > 0) lore.add(ui.raw("gui.lore.element-voucher"));
+                else lore.add(ui.raw("gui.lore.hint-unlock"));
                 int max = elements.ownership().maxOwned();
                 if (d.unlockedCount() >= max) lore.add(Messages.format(ui.raw("gui.lore.element-max"), "max", max));
             }
