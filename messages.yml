@@ -44,6 +44,11 @@ boss:
   reward-item: "&7  + &e{amount}x {item}"
   reward-voucher: "&d✦ Boss rơi Vé Nguyên Tố {element}&d! Chuột phải vé để sở hữu."
   enraged: "&c{boss} &cnổi điên!"
+  spawner-announce: "&c&l⚠ &r{boss} &cxuất hiện tại &e{world} {x} {y} {z}&c! Hãy đến hạ nó!"
+  legendary-announce: "&5&k||&d&l HUYỀN THOẠI &5&k||&r {boss} &dđã giáng thế tại &e{world} {x} {y} {z}&d!"
+  legendary-title: "&d&l⚔ HUYỀN THOẠI GIÁNG THẾ ⚔"
+  despawned: "&7{boss} &7đã biến mất vào hư không..."
+  reward-legendary: "&aPhần thưởng từ {boss}&a: &e{exp} EXP&a."
 crystal:
   item-name: "&b✧ Tinh Thể {element}"
   item-lore:
@@ -132,6 +137,10 @@ admin:
   boss-unknown: "&cBoss không tồn tại. Có: {ids}"
   boss-limit: "&cĐã đạt số boss tối đa cùng lúc."
   boss-killed: "&aĐã gỡ {count} boss."
+  spawner-set: "&aĐã đặt điểm spawn boss tại &e{world} {x} {y} {z}&a. Boss đầu tiên sau &e{minutes} phút&a."
+  spawner-cleared: "&aĐã xóa điểm spawn boss."
+  spawner-none: "&cChưa đặt điểm spawn boss. Đứng ở nơi muốn spawn và dùng /elementeradmin boss setspawn."
+  spawner-next: "&7Boss kế tiếp sau &e{minutes} phút &7tại &f{world} {x} {y} {z} &7(spawn định kỳ: {state})"
   given-voucher: "&aĐã trao {amount} Vé Nguyên Tố {element} &acho {player}."
 gui:
   title-main: "&6Nguyên Tố"

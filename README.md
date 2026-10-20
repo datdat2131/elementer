@@ -12,6 +12,7 @@ Plugin nguyên tố RPG cho server **BoxMine RPG** – Paper **1.21.4**, **Java 
 - **Rồng (giới hạn, 4 kỹ năng):** Long Tức (xuyên 4 mục tiêu), Long Phi (lao + rơi chậm), Long Uy (gầm hất văng, làm chậm/suy yếu), Long Thần Giáng Thế (tuyệt kỹ). Hào quang nhiều lớp kiểu `DRAGON` và **đôi cánh rồng bằng hạt** vỗ theo chuyển động (bật/tắt `/elementer wings`). Khắc mọi nguyên tố; không nguyên tố nào khắc Rồng.
 - **Vé Nguyên Tố (tờ giấy):** nguyên tố giới hạn chỉ nhận bằng vé; **chuột phải** để sở hữu. Mỗi vé có mã duy nhất được ghi trong DB nên vé bị nhân bản chỉ dùng được một lần; vé không mất nếu bạn đã có nguyên tố đó hoặc đã đủ 3 nguyên tố. Tích hợp nạp thẻ: cho plugin cửa hàng/nạp chạy lệnh console `elementeradmin give %player% voucher dark` (hoặc `rong`).
 - **Boss nguyên tố + Tinh Thể + đổi vé:** 6 boss (Chúa Tể Hỏa Ngục, Nữ Hoàng Băng Giá, Thần Sấm, Cự Thạch Thủ Hộ, Phong Vương, Thánh Kỵ Sĩ Quang Minh) dùng kỹ năng nguyên tố tấn công người chơi (có báo hiệu trước đòn vùng, tương khắc với nguyên tố người chơi, nổi điên khi còn ít máu, thanh máu). Boss chết rơi **Tinh Thể** của nguyên tố đó cho người gây ≥ 5% sát thương; đổi **48 Tinh Thể** lấy **1 Vé Nguyên Tố** bằng GUI (`/elementer exchange` hoặc nút "Đổi Tinh Thể lấy Vé" trong menu; GUI hiện cần/đang có/còn thiếu bao nhiêu nguyên liệu và boss nào rơi; **chuột phải** vào nguyên tố để xem thông tin boss: kỹ năng, lời thoại, vật phẩm rớt) hoặc lệnh `/elementer exchange <nguyên tố>`. Ngoài Tinh Thể, mỗi boss còn rơi **vật phẩm thêm** (mục `rewards.items`, roll riêng từng người) và EXP. Bóng Tối và Rồng **không** đổi được (chỉ vé nạp). Boss còn **nói trong chat** (khi xuất hiện, tung kỹ năng, còn nửa máu, nổi điên, hạ người chơi, lúc chết); lời thoại sửa trong mục `lines` của từng boss, tắt bằng `settings.speech-enabled: false`. Tất cả trong `bosses.yml`.
+- **Boss huyền thoại + spawn định kỳ:** 2 boss huyền thoại **Ma Vương Hắc Ám** (Bóng Tối, có kỹ năng kéo người về phía boss) và **Long Vương Hủy Diệt** (Rồng), 3000 máu, 5 kỹ năng, nổi điên, lời thoại riêng. Chỉ xuất hiện từ bộ spawn định kỳ: đứng ở nơi muốn boss xuất hiện và gõ `/elementeradmin boss setspawn`; cứ **mỗi 2 tiếng** (`spawner.interval-minutes`) spawn 1 boss tại đó, thông báo cho **toàn server**. Tỉ lệ: **Bóng Tối 1%, Rồng 1%** (`spawn-chance` của từng boss), 98% còn lại chia đều cho 6 boss thường (`spawn-weight`). Boss huyền thoại không rơi Tinh Thể mà rớt thẳng **Vé Nguyên Tố Bóng Tối/Rồng** (`voucher-chance` 50% cho mỗi người gây đủ sát thương) cùng kim cương/ngọc lục bảo. Giờ đếm lưu trong `spawner-state.yml` nên restart không mất; boss tự biến mất sau `spawner.despawn-minutes` (mặc định 30 phút) nếu chưa bị hạ.
 - **Hào quang dưới chân:** mỗi nguyên tố một hào quang riêng (hạt + kiểu RING/DOUBLE_RING/SPIRAL), mở khóa ở cấp 5, bật/tắt bằng `/elementer aura` hoặc nút trong GUI; ẩn khi tàng hình/ngồi xổm/đang lướt/bơi. Tinh chỉnh trong `elements.yml` (mục `aura`) và `config.yml` (mục `aura`).
 - Thức tỉnh, EXP, cấp 1–50, điểm kỹ năng, mở khóa kỹ năng theo cấp, nâng cấp từng kỹ năng bằng điểm.
 - 26 kỹ năng (18 của 6 nguyên tố thường + 4 Bóng Tối + 4 Rồng) có logic thật (sát thương/khống chế/hồi máu/khiên/lướt) + hiệu ứng hạt và âm thanh:
@@ -72,6 +73,7 @@ Driver SQLite được đóng gói sẵn trong JAR (maven-shade), không cần t
 | `/elementeradmin give <người chơi> voucher <nguyên tố> [1-10]` | `elementer.admin.give` | op |
 | `/elementeradmin give <người chơi> crystal <nguyên tố> [1-64]` | `elementer.admin.give` | op |
 | `/elementeradmin boss <list\|spawn <id>\|kill <id\|all>>` | `elementer.admin.boss` | op |
+| `/elementeradmin boss setspawn` / `clearspawn` / `spawnnow [id]` / `next` | `elementer.admin.boss` | op |
 | `/elementeradmin set <người chơi> <element\|level\|exp\|points> <giá trị>` | `elementer.admin.set` | op |
 | `/elementeradmin reset <người chơi>` | `elementer.admin.reset` | op |
 | `/elementeradmin updateconfig` | `elementer.admin.updateconfig` | op |
@@ -87,7 +89,8 @@ Driver SQLite được đóng gói sẵn trong JAR (maven-shade), không cần t
 | `config.yml` | DB, EXP/cấp, nguồn EXP, phần thưởng mốc cấp, giới hạn chiến đấu |
 | `elements.yml` | Thông tin/nội tại 8 nguyên tố, tương khắc, nguyên tố của quái, danh sách xác sống |
 | `skills.yml` | 26 kỹ năng: sát thương, tầm, bán kính, hồi chiêu, hiệu ứng, hạt, âm thanh |
-| `bosses.yml` | Boss, kỹ năng boss, vật phẩm Tinh Thể, giá đổi vé, điểm hồi sinh tự động |
+| `bosses.yml` | Boss thường + huyền thoại, kỹ năng boss, bộ spawn định kỳ (`spawner`), tỉ lệ, Tinh Thể, giá đổi vé, điểm hồi sinh cố định |
+| `spawner-state.yml` | (tự tạo) điểm spawn boss do `boss setspawn` đặt và mốc spawn gần nhất |
 | `messages.yml` | Toàn bộ thông báo và chữ trong GUI (hỗ trợ `&` và `&#rrggbb`) |
 
 Mẹo cân bằng: sát thương thực = `damage × (1 + per-level-bonus×(cấp kỹ năng−1)) × (1 + damage-per-level×(cấp−1)) × tương khắc × (PvP 0.6)`, và luôn ≤ `combat.max-skill-damage`.
@@ -112,6 +115,8 @@ Bộ test JUnit 5 (`src/test`): EXP/lên cấp, hồi chiêu, công thức sát 
 - [ ] Thức tỉnh → thoát → vào lại: nguyên tố/cấp/EXP còn nguyên.
 - [ ] Nhận vé thứ hai (`/elementeradmin give <tên> voucher <nguyên tố>`), chuột phải: có nguyên tố mới ở cấp 1; chuyển đi/quay lại: cấp cũ còn nguyên; vé thứ tư bị từ chối mà không mất vé.
 - [ ] Triệu hồi boss (`/elementeradmin boss spawn fire_lord`): thanh máu, lời thoại, đòn vùng có vòng báo hiệu; hạ boss: nhận Tinh Thể/EXP/vật phẩm; đổi 48 Tinh Thể ở GUI ra vé.
+- [ ] `/elementeradmin boss setspawn` rồi `/elementeradmin boss spawnnow`: boss xuất hiện tại điểm đặt, thông báo toàn server; `boss next` hiện thời gian còn lại; `spawnnow dark_lord` hiện tiêu đề huyền thoại, boss kéo người chơi về phía mình.
+- [ ] Để boss không bị hạ quá `spawner.despawn-minutes`: boss biến mất; restart server: giờ đếm tiếp tục từ `spawner-state.yml`.
 - [ ] Kéo Hồn (Bóng Tối) kéo mục tiêu về trước mặt và không hất tung/bay.
 - [ ] Cánh rồng và hào quang hiển thị đúng sau lưng/dưới chân, tắt được bằng `/elementer wings off` và `/elementer aura off`.
 - [ ] Spam phím F: chỉ tung theo hồi chiêu chung + hồi chiêu kỹ năng.
@@ -125,6 +130,7 @@ Bộ test JUnit 5 (`src/test`): EXP/lên cấp, hồi chiêu, công thức sát 
 
 ## Giới hạn đã biết
 
+- **Boss huyền thoại:** kỹ năng/độ khó chưa thử trên server thật (3000 máu, ST tối đa 30/đòn); Kéo Hồn của boss cũng dịch chuyển người chơi bằng sự kiện teleport chuẩn. Boss spawn định kỳ giữ chunk bằng chunk ticket cho tới khi chết/biến mất. Nếu server tắt đúng lúc đến giờ, boss sẽ spawn ngay lần kiểm tra đầu tiên sau khi bật lại.
 - **Boss:** không lưu xuống đĩa (restart là biến mất; điểm hồi sinh trong `bosses.yml` sẽ tạo lại khi có người chơi lại gần). Chỉ người **đang online** và cùng thế giới lúc boss chết mới nhận thưởng. Boss dùng quái vanilla nên AI di chuyển/đánh thường là của Minecraft; kỹ năng nguyên tố là phần bổ sung. Chưa kiểm chứng độ khó/cân bằng trên server thật: chỉnh `health`, `damage-multiplier` trong `bosses.yml`. Các kiểu quái `PILLAGER`, `STRAY`, `SKELETON` còn bắn tên vanilla song song với kỹ năng.
 - Boss còn có xác suất rớt thẳng **Vé Nguyên Tố** (`rewards.voucher-chance`, mặc định 5%/người nhận thưởng; không rớt nếu đã sở hữu nguyên tố đó hoặc đã đủ 3).
 - **Kéo Hồn** (Bóng Tối) kéo người về trước mặt và **không hất tung** (xóa đẩy lùi/rơi tự do sau khi kéo).

@@ -21,6 +21,7 @@ public final class ElementerCore extends JavaPlugin {
     private BossConfig bossConfig;
     private CrystalService crystalService;
     private BossService bossService;
+    private BossSpawner bossSpawner;
 
     @Override
     public void onEnable() {
@@ -57,6 +58,8 @@ public final class ElementerCore extends JavaPlugin {
         bossConfig.load();
         crystalService = new CrystalService(this, elementConfig, bossConfig, elementService, voucherService);
         bossService = new BossService(this, elementConfig, bossConfig, elementService, combatService, crystalService, voucherService);
+        bossSpawner = new BossSpawner(this, bossConfig, bossService);
+        bossSpawner.load();
         gui = new ElementGUI(this, elementConfig, elementService, skillService, actions, auraService, crystalService, bossConfig);
 
         Bukkit.getPluginManager().registerEvents(new PlayerListener(this, elementConfig, elementService, skillService, combatService), this);
@@ -74,13 +77,15 @@ public final class ElementerCore extends JavaPlugin {
             main.setTabCompleter(c);
         }
         if (admin != null) {
-            ElementerAdminCommand c = new ElementerAdminCommand(this, elementConfig, elementService, voucherService, crystalService, bossService, bossConfig);
+            ElementerAdminCommand c = new ElementerAdminCommand(this, elementConfig, elementService, voucherService, crystalService,
+                    new BossAdmin(elementConfig, bossConfig, bossService, bossSpawner));
             admin.setExecutor(c);
             admin.setTabCompleter(c);
         }
 
         auraService.start();
         bossService.start();
+        bossSpawner.start();
         elementService.start();
         // Hỗ trợ /reload hoặc plugin được bật khi đã có người chơi online
         for (Player p : Bukkit.getOnlinePlayers()) elementService.load(p);
@@ -89,6 +94,7 @@ public final class ElementerCore extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        if (bossSpawner != null) bossSpawner.stop();
         if (bossService != null) {
             bossService.stop();
             bossService.removeAll();
@@ -105,5 +111,7 @@ public final class ElementerCore extends JavaPlugin {
         auraService.start(); // áp dụng lại aura.interval-ticks
         bossConfig.load();
         bossService.start(); // áp dụng lại bosses.yml (boss đang sống vẫn giữ nguyên)
+        bossSpawner.load();
+        bossSpawner.start();
     }
 }

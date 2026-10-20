@@ -58,7 +58,8 @@ final class BossRewards {
             int n = b.def.crystalsMin() + ThreadLocalRandom.current().nextInt(b.def.crystalsMax() - b.def.crystalsMin() + 1);
             if (n > 0) crystals.give(p, b.def.element(), n);
             long exp = elements.addExp(p, b.def.exp(), true);
-            m.send(p, "boss.reward", "boss", b.def.name(), "crystals", n, "element", element, "exp", exp);
+            if (n > 0) m.send(p, "boss.reward", "boss", b.def.name(), "crystals", n, "element", element, "exp", exp);
+            else m.send(p, "boss.reward-legendary", "boss", b.def.name(), "exp", exp);
             giveVoucher(p, b, element, m);
             giveDrops(p, b, m);
         }

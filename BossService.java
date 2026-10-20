@@ -1,6 +1,7 @@
 package com.astrax.elementer;
 
 import net.kyori.adventure.bossbar.BossBar;
+import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
@@ -18,6 +19,7 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitTask;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -86,6 +88,20 @@ public final class BossService {
 
     /** @return boss mới, hoặc null nếu vượt settings.max-active */
     public ActiveBoss spawn(BossDef def, Location loc, int spawnIndex) {
+        return doSpawn(def, loc, spawnIndex, false);
+    }
+
+    /** Boss do bộ spawn định kỳ tạo: giữ chunk, thông báo toàn server, có thể tự biến mất (spawner.despawn-minutes). */
+    public ActiveBoss spawnTimed(BossDef def, Location loc) {
+        return doSpawn(def, loc, -1, true);
+    }
+
+    public boolean isAlive(UUID entityId) {
+        ActiveBoss b = active.get(entityId);
+        return b != null && b.entity.isValid();
+    }
+
+    private ActiveBoss doSpawn(BossDef def, Location loc, int spawnIndex, boolean timed) {
         if (active.size() >= bossCfg.settings().getInt("settings.max-active", 5)) return null;
         Entity e = loc.getWorld().spawnEntity(loc, def.type());
         if (!(e instanceof LivingEntity le)) {
@@ -108,11 +124,18 @@ public final class BossService {
         le.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, PotionEffect.INFINITE_DURATION, 0, false, false));
         le.getPersistentDataContainer().set(bossKey, PersistentDataType.STRING, def.id());
         BossBar bar = BossBar.bossBar(Text.c(def.name()), 1f, barColor(def.element()), BossBar.Overlay.NOTCHED_10);
-        ActiveBoss b = new ActiveBoss(def, le, bar, spawnIndex);
+        ActiveBoss b = new ActiveBoss(def, le, bar, spawnIndex, timed);
         active.put(le.getUniqueId(), b);
+        if (timed) {
+            b.chunkX = loc.getBlockX() >> 4;
+            b.chunkZ = loc.getBlockZ() >> 4;
+            b.chunkTicket = loc.getWorld().addPluginChunkTicket(b.chunkX, b.chunkZ, plugin);
+        }
         Fx.particle(loc.clone().add(0, 1, 0), "EXPLOSION_EMITTER", 1, 0, 0, 0, 0);
         Fx.sound(loc, "entity.wither.spawn", 1f, 1f);
-        if (bossCfg.settings().getBoolean("settings.announce", true)) {
+        if (timed && bossCfg.settings().getBoolean("spawner.announce-global", true)) {
+            announceGlobal(def, loc);
+        } else if (bossCfg.settings().getBoolean("settings.announce", true)) {
             for (Player p : loc.getWorld().getPlayers()) {
                 p.sendMessage(cfg.messages().prefixed("boss.spawned", "boss", def.name(),
                         "x", loc.getBlockX(), "y", loc.getBlockY(), "z", loc.getBlockZ()));
@@ -120,6 +143,22 @@ public final class BossService {
         }
         say(b, "spawn");
         return b;
+    }
+
+    /** Thông báo cho toàn server (boss huyền thoại có tiêu đề và âm thanh riêng). */
+    private void announceGlobal(BossDef def, Location loc) {
+        boolean legendary = def.spawnChance() > 0;
+        Messages m = cfg.messages();
+        String key = legendary ? "boss.legendary-announce" : "boss.spawner-announce";
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            p.sendMessage(m.prefixed(key, "boss", def.name(), "world", loc.getWorld().getName(),
+                    "x", loc.getBlockX(), "y", loc.getBlockY(), "z", loc.getBlockZ()));
+            if (legendary) {
+                p.showTitle(Title.title(m.get("boss.legendary-title"), Text.c(def.name()),
+                        Title.Times.times(Duration.ofMillis(300), Duration.ofMillis(3500), Duration.ofMillis(800))));
+            }
+            Fx.sound(p.getLocation(), legendary ? "entity.ender_dragon.growl" : "entity.wither.spawn", 0.8f, 0.7f);
+        }
     }
 
     private static void setBase(LivingEntity le, String key, double value) {
@@ -150,6 +189,13 @@ public final class BossService {
                 if (!e.isDead()) cleanup(b, false); // biến mất (chunk unload/bị gỡ), không phải chết
                 continue;
             }
+            if (b.timed && expired(b, now)) {
+                for (Player p : e.getWorld().getPlayers()) {
+                    p.sendMessage(cfg.messages().prefixed("boss.despawned", "boss", b.def.name()));
+                }
+                cleanup(b, false);
+                continue;
+            }
             checkEnrage(b);
             checkHalf(b);
             updateBar(b);
@@ -158,6 +204,11 @@ public final class BossService {
             if (e instanceof Mob m) m.setTarget(target);
             abilities.tryCast(b, target, now);
         }
+    }
+
+    private boolean expired(ActiveBoss b, long now) {
+        double minutes = bossCfg.settings().getDouble("spawner.despawn-minutes", 30);
+        return minutes > 0 && now - b.spawnedAt > minutes * 60_000L;
     }
 
     private Player nearestPlayer(ActiveBoss b) {
@@ -233,6 +284,10 @@ public final class BossService {
         }
         b.viewers.clear();
         active.remove(b.entity.getUniqueId());
+        if (b.chunkTicket) {
+            b.entity.getWorld().removePluginChunkTicket(b.chunkX, b.chunkZ, plugin);
+            b.chunkTicket = false;
+        }
         if (b.spawnIndex >= 0 && b.spawnIndex < spawnReadyAt.length && died) {
             spawnReadyAt[b.spawnIndex] = System.currentTimeMillis()
                     + bossCfg.spawns().get(b.spawnIndex).respawnMinutes() * 60_000L;

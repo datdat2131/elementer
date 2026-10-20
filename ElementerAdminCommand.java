@@ -21,18 +21,16 @@ public final class ElementerAdminCommand implements CommandExecutor, TabComplete
     private final ElementService elements;
     private final VoucherService vouchers;
     private final CrystalService crystals;
-    private final BossService bosses;
-    private final BossConfig bossCfg;
+    private final BossAdmin bossAdmin;
 
     public ElementerAdminCommand(ElementerCore plugin, ElementConfig cfg, ElementService elements, VoucherService vouchers,
-                                 CrystalService crystals, BossService bosses, BossConfig bossCfg) {
+                                 CrystalService crystals, BossAdmin bossAdmin) {
         this.plugin = plugin;
         this.cfg = cfg;
         this.elements = elements;
         this.vouchers = vouchers;
         this.crystals = crystals;
-        this.bosses = bosses;
-        this.bossCfg = bossCfg;
+        this.bossAdmin = bossAdmin;
     }
 
     @Override
@@ -136,7 +134,7 @@ public final class ElementerAdminCommand implements CommandExecutor, TabComplete
             }
             case "boss" -> {
                 if (!perm(sender, "elementer.admin.boss")) return true;
-                bossCommand(sender, args, label);
+                bossAdmin.handle(sender, args, label);
             }
             case "reset" -> {
                 if (!perm(sender, "elementer.admin.reset")) return true;
@@ -194,32 +192,6 @@ public final class ElementerAdminCommand implements CommandExecutor, TabComplete
         }
     }
 
-    /** /elementeradmin boss list | spawn <id> | kill <id|all> */
-    private void bossCommand(CommandSender sender, String[] args, String label) {
-        Messages m = cfg.messages();
-        String sub = args.length < 2 ? "list" : args[1].toLowerCase(Locale.ROOT);
-        switch (sub) {
-            case "list" -> {
-                m.send(sender, "admin.boss-header", "ids", String.join(", ", bossCfg.bosses().keySet()));
-                for (String line : bosses.describe()) sender.sendMessage(Text.c("&7- &f" + line));
-            }
-            case "spawn" -> {
-                if (!(sender instanceof Player p)) {
-                    m.send(sender, "player-only");
-                    return;
-                }
-                BossDef def = args.length < 3 ? null : bossCfg.boss(args[2]);
-                if (def == null) {
-                    m.send(sender, "admin.boss-unknown", "ids", String.join(", ", bossCfg.bosses().keySet()));
-                    return;
-                }
-                if (bosses.spawn(def, p.getLocation(), -1) == null) m.send(sender, "admin.boss-limit");
-            }
-            case "kill" -> m.send(sender, "admin.boss-killed", "count", bosses.kill(args.length < 3 ? "all" : args[2]));
-            default -> m.send(sender, "admin.usage", "usage", "/" + label + " boss <list|spawn <id>|kill <id|all>>");
-        }
-    }
-
     private boolean perm(CommandSender s, String node) {
         if (s.hasPermission(node)) return true;
         cfg.messages().send(s, "no-permission");
@@ -257,10 +229,8 @@ public final class ElementerAdminCommand implements CommandExecutor, TabComplete
         } else if (args.length == 4 && args[0].equalsIgnoreCase("give")
                 && (args[2].equalsIgnoreCase("voucher") || args[2].equalsIgnoreCase("crystal"))) {
             for (Element e : Element.values()) out.add(e.alias());
-        } else if (args.length == 2 && args[0].equalsIgnoreCase("boss")) {
-            out.addAll(List.of("list", "spawn", "kill"));
-        } else if (args.length == 3 && args[0].equalsIgnoreCase("boss") && args[1].equalsIgnoreCase("spawn")) {
-            out.addAll(bossCfg.bosses().keySet());
+        } else if (args.length >= 2 && args[0].equalsIgnoreCase("boss")) {
+            out.addAll(bossAdmin.complete(args));
         } else if (args.length == 4 && args[0].equalsIgnoreCase("set") && args[2].equalsIgnoreCase("element")) {
             for (Element e : Element.values()) out.add(e.alias());
         }

@@ -17,6 +17,17 @@ settings:
   cast-line-chance: 0.3         # xác suất nói khi tung kỹ năng
   cast-line-cooldown-seconds: 8 # khoảng cách tối thiểu giữa hai lời khi tung kỹ năng
 
+# Bộ spawn boss định kỳ: đứng ở nơi muốn boss xuất hiện và gõ /elementeradmin boss setspawn.
+# Cứ mỗi interval-minutes phút (đếm từ lần spawn gần nhất, lưu trong spawner-state.yml nên restart không mất giờ) sẽ spawn 1 boss.
+# Boss được chọn theo spawn-chance (HUYỀN THOẠI, xác suất tuyệt đối mỗi lần: 0.01 = 1%) hoặc spawn-weight (boss thường, tỉ trọng).
+# Ví dụ mặc định: Bóng Tối 1%, Rồng 1%, 98% còn lại chia đều cho 6 boss thường.
+spawner:
+  enabled: true
+  interval-minutes: 120        # 2 tiếng
+  announce-global: true        # thông báo cho TOÀN server (huyền thoại có tiêu đề riêng)
+  skip-if-alive: true          # nếu boss lần trước còn sống thì chưa spawn thêm
+  despawn-minutes: 30          # boss spawn định kỳ tự biến mất sau chừng này phút nếu chưa bị hạ (0 = không)
+
 # Vật phẩm dùng làm Tinh Thể (nhận diện bằng thẻ ẩn, không lẫn với vật phẩm thường)
 crystals:
   FIRE: MAGMA_CREAM
@@ -41,6 +52,7 @@ exchange:
 spawns: []
 
 # Boss: dùng /elementeradmin boss spawn <id> để triệu hồi tại chỗ bạn đứng.
+# spawn-weight (mặc định 1): tỉ trọng của boss THƯỜNG trong bộ spawn định kỳ; spawn-chance (>0): boss HUYỀN THOẠI.
 # rewards.voucher-chance: xác suất (0-1) rớt thẳng 1 Vé Nguyên Tố của boss cho mỗi người nhận thưởng (bỏ qua nếu đã sở hữu/đủ 3 nguyên tố).
 # rewards.items: vật phẩm rớt thêm (ngoài Tinh Thể): { material, min, max (<=64), chance 0-1, name (tùy chọn) } - roll riêng cho từng người nhận thưởng.
 # abilities: type = PROJECTILE | AOE_SELF | AOE_TARGET | HEAL_SELF (power = % máu tối đa hồi, 0-1)
@@ -59,6 +71,7 @@ bosses:
     detect-range: 28
     enrage-below: 0.4           # còn dưới 40% máu thì nổi điên
     enrage-multiplier: 1.3
+    spawn-weight: 1
     rewards: { crystals-min: 4, crystals-max: 8, exp: 600, voucher-chance: 0.05, items: [{ material: BLAZE_ROD, min: 3, max: 6, chance: 1.0 }, { material: DIAMOND, min: 1, max: 3, chance: 0.3 }] }
     lines:                      # lời thoại boss; {player} = người chơi liên quan
       spawn: ["Kẻ nào dám đánh thức ngọn lửa địa ngục?"]
@@ -108,6 +121,7 @@ bosses:
     detect-range: 28
     enrage-below: 0.4
     enrage-multiplier: 1.3
+    spawn-weight: 1
     rewards: { crystals-min: 4, crystals-max: 8, exp: 600, voucher-chance: 0.05, items: [{ material: BLUE_ICE, min: 8, max: 16, chance: 1.0 }, { material: DIAMOND, min: 1, max: 3, chance: 0.3 }] }
     lines:                      # lời thoại boss; {player} = người chơi liên quan
       spawn: ["Ai dám xâm phạm vương quốc băng giá của ta?"]
@@ -157,6 +171,7 @@ bosses:
     detect-range: 28
     enrage-below: 0.4
     enrage-multiplier: 1.3
+    spawn-weight: 1
     rewards: { crystals-min: 4, crystals-max: 8, exp: 600, voucher-chance: 0.05, items: [{ material: LIGHTNING_ROD, min: 2, max: 4, chance: 1.0 }, { material: DIAMOND, min: 1, max: 3, chance: 0.3 }] }
     lines:                      # lời thoại boss; {player} = người chơi liên quan
       spawn: ["Sấm sét đã triệu hồi ta!"]
@@ -207,6 +222,7 @@ bosses:
     detect-range: 26
     enrage-below: 0.35
     enrage-multiplier: 1.3
+    spawn-weight: 1
     rewards: { crystals-min: 4, crystals-max: 8, exp: 600, voucher-chance: 0.05, items: [{ material: IRON_BLOCK, min: 2, max: 4, chance: 1.0 }, { material: EMERALD, min: 4, max: 8, chance: 0.5 }] }
     lines:                      # lời thoại boss; {player} = người chơi liên quan
       spawn: ["Kẻ xâm nhập... rời khỏi núi của ta!"]
@@ -252,6 +268,7 @@ bosses:
     detect-range: 30
     enrage-below: 0.4
     enrage-multiplier: 1.3
+    spawn-weight: 1
     rewards: { crystals-min: 4, crystals-max: 8, exp: 600, voucher-chance: 0.05, items: [{ material: WIND_CHARGE, min: 8, max: 16, chance: 1.0 }, { material: DIAMOND, min: 1, max: 3, chance: 0.3 }] }
     lines:                      # lời thoại boss; {player} = người chơi liên quan
       spawn: ["Gió báo cho ta biết có kẻ lạ..."]
@@ -301,6 +318,7 @@ bosses:
     detect-range: 30
     enrage-below: 0.4
     enrage-multiplier: 1.3
+    spawn-weight: 1
     rewards: { crystals-min: 4, crystals-max: 8, exp: 600, voucher-chance: 0.05, items: [{ material: GOLDEN_APPLE, min: 2, max: 4, chance: 1.0 }, { material: DIAMOND, min: 1, max: 3, chance: 0.3 }] }
     lines:                      # lời thoại boss; {player} = người chơi liên quan
       spawn: ["Ánh sáng sẽ phán xét kẻ xâm phạm!"]
@@ -344,3 +362,136 @@ bosses:
         power: 0.1
         cooldown: 30
         sound: "block.beacon.ambient"
+  # ------------------------------------------------------------------ BOSS HUYỀN THOẠI
+  # Chỉ ra từ bộ spawn định kỳ với tỉ lệ rất thấp (spawn-chance). Không rơi Tinh Thể; rớt thẳng Vé Nguyên Tố
+  # Bóng Tối/Rồng với xác suất voucher-chance cho mỗi người gây đủ sát thương.
+  dark_lord:
+    element: DARK
+    name: "&5&l☽ Ma Vương Hắc Ám ☽"
+    entity: WITHER_SKELETON
+    health: 3000
+    attack-damage: 18
+    armor: 15
+    scale: 3.0
+    speed: 0.3
+    detect-range: 40
+    enrage-below: 0.5
+    enrage-multiplier: 1.4
+    spawn-chance: 0.01          # 1% mỗi lần spawn định kỳ
+    lines:
+      spawn: ["Bóng tối vĩnh cửu đã thức tỉnh... Hãy run sợ đi, phàm nhân!"]
+      cast: ["Hãy đến bên ta!", "Bóng tối nuốt chửng tất cả!", "Không ai thoát khỏi vực thẳm."]
+      half: ["Ngươi mạnh hơn ta tưởng... nhưng chưa đủ!"]
+      enrage: ["Ta sẽ nhấn chìm cả thế giới này trong bóng đêm!"]
+      kill: ["Linh hồn ngươi giờ thuộc về ta, {player}."]
+      death: ["Bóng tối... không bao giờ... biến mất..."]
+    rewards: { crystals-min: 0, crystals-max: 0, exp: 5000, voucher-chance: 0.5, items: [{ material: DIAMOND, min: 6, max: 12, chance: 1.0 }, { material: EMERALD, min: 8, max: 16, chance: 0.5 }] }
+    abilities:
+      shadow_bolt:
+        name: "Hắc Tiễn"
+        type: PROJECTILE
+        damage: 12
+        range: 34
+        cooldown: 4
+        particle: SQUID_INK
+        sound: "entity.wither.shoot"
+        effects: { wither-seconds: 4, knockback: 0.3 }
+      soul_pull:
+        name: "Kéo Hồn"
+        type: AOE_SELF
+        damage: 8
+        radius: 12
+        cooldown: 14
+        particle: PORTAL
+        sound: "entity.enderman.teleport"
+        effects: { delay-ticks: 20, teleport-pull: 1, root-seconds: 1.5, slow-seconds: 2, slow-amplifier: 1 }
+      abyss:
+        name: "Vực Thẳm"
+        type: AOE_TARGET
+        damage: 14
+        radius: 5
+        range: 32
+        cooldown: 16
+        particle: SOUL
+        sound: "entity.wither.ambient"
+        effects: { delay-ticks: 25, repeat: 3, interval-ticks: 12, blind-seconds: 3, wither-seconds: 5 }
+      eclipse:
+        name: "Nhật Thực"
+        type: AOE_SELF
+        damage: 18
+        radius: 12
+        cooldown: 30
+        particle: SQUID_INK
+        sound: "entity.wither.ambient"
+        effects: { delay-ticks: 30, repeat: 4, interval-ticks: 10, pull: 1.2, blind-seconds: 3, weakness-seconds: 6 }
+      dark_mend:
+        name: "Hấp Thụ Bóng Tối"
+        type: HEAL_SELF
+        power: 0.06
+        cooldown: 35
+        sound: "block.beacon.ambient"
+  dragon_lord:
+    element: DRAGON
+    name: "&#ff5500&l♛ Long Vương Hủy Diệt ♛"
+    entity: RAVAGER
+    health: 3000
+    attack-damage: 18
+    armor: 15
+    scale: 2.4
+    speed: 0.3
+    detect-range: 40
+    enrage-below: 0.5
+    enrage-multiplier: 1.4
+    spawn-chance: 0.01          # 1% mỗi lần spawn định kỳ
+    lines:
+      spawn: ["Ta là rồng - kẻ thống trị bầu trời! Quỳ xuống!"]
+      cast: ["Hãy hóa thành tro bụi!", "Lửa rồng thiêu rụi tất cả!", "Run sợ trước uy quyền của rồng!"]
+      half: ["Hừ... ngươi dám làm ta chảy máu sao?"]
+      enrage: ["GẦM!!! Cơn thịnh nộ của rồng sẽ nghiền nát các ngươi!"]
+      kill: ["Yếu ớt, {player}."]
+      death: ["Rồng... không thể... gục ngã..."]
+    rewards: { crystals-min: 0, crystals-max: 0, exp: 5000, voucher-chance: 0.5, items: [{ material: DIAMOND, min: 6, max: 12, chance: 1.0 }, { material: EMERALD, min: 8, max: 16, chance: 0.5 }] }
+    abilities:
+      dragon_breath:
+        name: "Long Tức"
+        type: PROJECTILE
+        damage: 11
+        range: 30
+        cooldown: 4
+        particle: FLAME
+        sound: "entity.ender_dragon.shoot"
+        effects: { burn-seconds: 5, knockback: 0.5 }
+      wing_gust:
+        name: "Cuồng Phong Cánh Rồng"
+        type: AOE_SELF
+        damage: 10
+        radius: 10
+        cooldown: 12
+        particle: CLOUD
+        sound: "entity.ender_dragon.flap"
+        effects: { delay-ticks: 18, knockback: 1.5, slow-seconds: 2, slow-amplifier: 1 }
+      dragon_fall:
+        name: "Long Thần Giáng"
+        type: AOE_TARGET
+        damage: 16
+        radius: 6
+        range: 34
+        cooldown: 18
+        particle: FLAME
+        sound: "entity.ender_dragon.growl"
+        effects: { delay-ticks: 25, repeat: 3, interval-ticks: 12, burn-seconds: 6, knockback: 1.0, lightning-visual: 1 }
+      dragon_roar:
+        name: "Long Uy"
+        type: AOE_SELF
+        damage: 14
+        radius: 12
+        cooldown: 24
+        particle: END_ROD
+        sound: "entity.ender_dragon.growl"
+        effects: { delay-ticks: 25, knockback: 1.8, slow-seconds: 3, slow-amplifier: 2, weakness-seconds: 6 }
+      dragon_scale:
+        name: "Vảy Rồng"
+        type: HEAL_SELF
+        power: 0.05
+        cooldown: 40
+        sound: "block.anvil.place"

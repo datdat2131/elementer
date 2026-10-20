@@ -15,6 +15,11 @@ final class ActiveBoss {
     final LivingEntity entity;
     final BossBar bar;
     final int spawnIndex; // -1 nếu do quản trị triệu hồi
+    final boolean timed;  // boss do bộ spawn định kỳ tạo (có thể tự biến mất, giữ chunk)
+    final long spawnedAt = System.currentTimeMillis();
+    boolean chunkTicket;
+    int chunkX;
+    int chunkZ;
     final Map<UUID, Double> damage = new HashMap<>();
     final Map<String, Long> readyAt = new HashMap<>();
     final Set<UUID> viewers = new HashSet<>();
@@ -23,11 +28,12 @@ final class ActiveBoss {
     boolean saidHalf;
     long nextCastLineAt;
 
-    ActiveBoss(BossDef def, LivingEntity entity, BossBar bar, int spawnIndex) {
+    ActiveBoss(BossDef def, LivingEntity entity, BossBar bar, int spawnIndex, boolean timed) {
         this.def = def;
         this.entity = entity;
         this.bar = bar;
         this.spawnIndex = spawnIndex;
+        this.timed = timed;
     }
 
     void addDamage(UUID player, double amount) {

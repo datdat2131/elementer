@@ -25,5 +25,7 @@ public record BossDef(
         List<SkillDef> abilities,
         Map<String, List<String>> lines,
         List<BossDrop> drops,
-        double voucherChance) {
+        double voucherChance,
+        double spawnWeight,
+        double spawnChance) {
 }

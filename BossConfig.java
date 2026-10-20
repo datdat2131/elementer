@@ -117,7 +117,8 @@ public final class BossConfig {
                 Math.max(0, Math.min(0.9, s.getDouble("enrage-below", 0.4))), Math.max(1, Math.min(2, s.getDouble("enrage-multiplier", 1.3))),
                 cmin, Math.max(cmin, s.getInt("rewards.crystals-max", 8)), Math.max(0, s.getLong("rewards.exp", 500)), abilities,
                 lines(s.getConfigurationSection("lines")), drops(id, s.getMapList("rewards.items")),
-                Math.max(0, Math.min(1, s.getDouble("rewards.voucher-chance", 0))));
+                Math.max(0, Math.min(1, s.getDouble("rewards.voucher-chance", 0))),
+                Math.max(0, s.getDouble("spawn-weight", 1)), Math.max(0, Math.min(1, s.getDouble("spawn-chance", 0))));
     }
 
     private List<BossDrop> drops(String bossId, List<Map<?, ?>> raw) {

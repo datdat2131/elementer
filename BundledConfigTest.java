@@ -159,16 +159,27 @@ class BundledConfigTest {
         double maxDamage = y.getDouble("settings.max-damage");
         double maxControl = yaml("config.yml").getDouble("combat.max-control-seconds");
         ConfigurationSection bosses = y.getConfigurationSection("bosses");
-        assertEquals(6, bosses.getKeys(false).size());
+        assertEquals(8, bosses.getKeys(false).size()); // 6 boss thường + 2 huyền thoại
+        double legendaryTotal = 0;
         Set<Element> covered = new HashSet<>();
         for (String id : bosses.getKeys(false)) {
             ConfigurationSection b = bosses.getConfigurationSection(id);
             Element el = Element.parse(b.getString("element"));
             assertNotNull(el, id);
             covered.add(el);
-            assertTrue(b.getDouble("rewards.voucher-chance") >= 0 && b.getDouble("rewards.voucher-chance") <= 0.2, id + " xác suất rớt vé");
-            assertNotEquals(Element.DARK, el, "boss không được cho nguyên tố nạp");
-            assertNotEquals(Element.DRAGON, el, "boss không được cho nguyên tố nạp");
+            double chance = b.getDouble("spawn-chance");
+            boolean premium = el == Element.DARK || el == Element.DRAGON;
+            if (premium) {
+                // chỉ boss huyền thoại (hiếm) mới cho nguyên tố giới hạn, rớt vé trực tiếp chứ không có Tinh Thể
+                assertTrue(chance > 0 && chance <= 0.05, id + " phải hiếm (spawn-chance <= 5%)");
+                assertEquals(0, b.getInt("rewards.crystals-max"), id);
+                assertTrue(b.getDouble("rewards.voucher-chance") > 0 && b.getDouble("rewards.voucher-chance") <= 1, id);
+                legendaryTotal += chance;
+            } else {
+                assertEquals(0.0, chance, 1e-9, id + " boss thường không có spawn-chance");
+                assertTrue(b.getDouble("spawn-weight", 1) > 0, id);
+                assertTrue(b.getDouble("rewards.voucher-chance") >= 0 && b.getDouble("rewards.voucher-chance") <= 0.2, id + " xác suất rớt vé");
+            }
             assertTrue(b.getDouble("health") >= 20 && b.getDouble("scale") <= 4, id);
             assertTrue(b.getInt("rewards.crystals-min") <= b.getInt("rewards.crystals-max"), id);
             for (String ev : new String[]{"spawn", "cast", "enrage", "kill", "death"}) {
@@ -199,7 +210,12 @@ class BundledConfigTest {
                 }
             }
         }
-        assertEquals(Set.of(Element.FIRE, Element.ICE, Element.LIGHTNING, Element.EARTH, Element.WIND, Element.LIGHT), covered);
+        assertEquals(Set.of(Element.FIRE, Element.ICE, Element.LIGHTNING, Element.EARTH, Element.WIND, Element.LIGHT,
+                Element.DARK, Element.DRAGON), covered);
+        assertTrue(legendaryTotal > 0 && legendaryTotal < 0.5, "tổng tỉ lệ huyền thoại hợp lý");
+        ConfigurationSection sp = y.getConfigurationSection("spawner");
+        assertEquals(120, sp.getInt("interval-minutes"));
+        assertTrue(sp.getBoolean("enabled") && sp.getInt("despawn-minutes") >= 0);
     }
 
     @Test
